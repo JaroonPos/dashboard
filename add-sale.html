@@ -46,62 +46,61 @@
       <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:bg-blue-700 transition duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">บันทึก</button>
     </form>
   </div>
+<script>
+const SUPABASE_URL = 'https://ocmskhrypxeljgncyffp.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9jbXNraHJ5cHhlbGpnbmN5ZmZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc5MDcyMzIsImV4cCI6MjA3MzQ4MzIzMn0.clWbGRV1MrUHnWPyTEc66fnjbD8mLqo6fF1V6qiOJa4';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  <script>
-    const SUPABASE_URL = 'https://ocmskhrypxeljgncyffp.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9jbXNraHJ5cHhlbGpnbmN5ZmZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc5MDcyMzIsImV4cCI6MjA3MzQ4MzIzMn0.clWbGRV1MrUHnWPyTEc66fnjbD8mLqo6fF1V6qiOJa4';
+document.getElementById("saleForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
 
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const userName = document.getElementById("userName").value;
+  const orders = parseInt(document.getElementById("orders").value);
+  const sales = parseFloat(document.getElementById("sales").value);
+  const units = parseInt(document.getElementById("units").value);
+  const password = document.getElementById("password").value;
 
-    // ดึง userName จาก query string แทน user_id
-    const urlParams = new URLSearchParams(window.location.search);
-    const userName = urlParams.get("userName");
+  if (!userName) {
+    alert("กรุณาเลือกผู้ขาย");
+    return;
+  }
 
-    document.getElementById("saleForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
+  // ค้นหา user ใน Supabase
+  const { data: user, error: userError } = await supabase
+    .from("userDash")
+    .select("id, password")
+    .eq("userName", userName)
+    .single();
 
-      const orders = parseInt(document.getElementById("orders").value);
-      const sales = parseFloat(document.getElementById("sales").value);
-      const units = parseInt(document.getElementById("units").value);
-      const password = document.getElementById("password").value;
+  if (userError || !user) {
+    alert("ไม่พบผู้ใช้ที่เลือก");
+    return;
+  }
 
-      // 1. ค้นหา user_id และ password จาก userName ที่ส่งมา
-      const { data: user, error: userError } = await supabase
-        .from("userDash")
-        .select("id, password")
-        .eq("userName", userName)
-        .single();
+  if (user.password !== password) {
+    alert("รหัสผ่านไม่ถูกต้อง");
+    return;
+  }
 
-      if (userError || !user) {
-        alert("ไม่พบผู้ใช้ที่ต้องการบันทึกข้อมูล");
-        return;
-      }
+  // Insert ข้อมูลการขาย
+  const { error: insertError } = await supabase
+    .from("sales")
+    .insert([{
+      user_id: user.id,
+      name: userName,
+      orders,
+      sales,
+      units
+    }]);
 
-      if (user.password !== password) {
-        alert("รหัสผ่านไม่ถูกต้อง");
-        return;
-      }
+  if (insertError) {
+    alert("บันทึกไม่สำเร็จ: " + insertError.message);
+  } else {
+    alert("บันทึกสำเร็จ!");
+    window.location.href = "index.html";
+  }
+});
+</script>
 
-      const userId = user.id;
-
-      // 2. Insert ข้อมูลการขาย
-        const { error: insertError } = await supabase
-            .from("sales")
-            .insert([{
-            user_id: userId,
-            name: userName, // เพิ่มบรรทัดนี้เพื่อบันทึกชื่อผู้ใช้
-            orders,
-            sales,
-            units
-        }]);
-
-      if (insertError) {
-        alert("บันทึกไม่สำเร็จ: " + insertError.message);
-      } else {
-        alert("บันทึกสำเร็จ!");
-        window.location.href = "index.html";
-      }
-    });
-  </script>
 </body>
 </html>
