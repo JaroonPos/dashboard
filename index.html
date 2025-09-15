@@ -135,18 +135,19 @@
   function populateTable(salesData) {
     const tableBody = document.getElementById('salesTable');
     tableBody.innerHTML = '';
-    salesData.forEach(s => {
-      const row = `
-        <tr>
-          <td class="border p-2 flex items-center gap-2">
-            <img src="${s.img}" class="w-6 h-6 rounded-full"> ${s.name}
-          </td>
-          <td class="border p-2 text-right">${s.orders}</td>
-          <td class="border p-2 text-right">฿${s.sales.toLocaleString()}</td>
-          <td class="border p-2 text-right">${s.units}</td>
-          <td class="border p-2 text-right">฿${(s.orders > 0 ? (s.sales / s.orders).toFixed(0) : 0)}</td>
-        </tr>`;
-      tableBody.insertAdjacentHTML('beforeend', row);
+    salespersons.forEach(sp => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>
+          <img src="${sp.img}" width="40" height="40" style="border-radius:50%"> 
+          ${sp.name}
+        </td>
+        <td>${sp.orders}</td>
+        <td>${sp.sales}</td>
+        <td>${sp.units}</td>
+        <td><a href="add-sale.html?user_id=${sp.id}">เพิ่มยอดขาย</a></td>
+      `;
+      tableBody.appendChild(row);
     });
   }
 
