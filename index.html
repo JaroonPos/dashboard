@@ -129,9 +129,15 @@
 
 
   function updateSummary(salesData) {
+    const totalOrders = salesData.reduce((sum, s) => sum + s.orders, 0);
     const totalSales = salesData.reduce((sum, s) => sum + s.sales, 0);
+    const totalUnits = salesData.reduce((sum, s) => sum + s.units, 0);
+    const avgBasket = totalOrders > 0 ? (totalSales / totalOrders).toFixed(0) : 0;
 
+    document.getElementById('totalOrders').innerText = totalOrders;
     document.getElementById('totalSales').innerText = "฿" + totalSales.toLocaleString();
+    document.getElementById('totalUnits').innerText = totalUnits;
+    document.getElementById('basketSize').innerText = "฿" + avgBasket;
     document.getElementById('totalSalespeople').innerText = salesData.length;
   }
 
