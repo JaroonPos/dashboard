@@ -7,15 +7,12 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 </head>
 <body class="bg-gray-100 p-6">
 
   <div class="max-w-6xl mx-auto bg-white rounded-2xl shadow-lg p-6">
-    <!-- หัวข้อ -->
     <h1 class="text-3xl font-bold text-center mb-6">Sales Dashboard</h1>
 
-    <!-- การ์ดสรุป -->
     <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
       <div class="bg-blue-50 p-4 rounded-xl text-center shadow">
         <p class="text-gray-500 text-sm">Total Orders</p>
@@ -39,7 +36,6 @@
       </div>
     </div>
 
-    <!-- ตารางข้อมูล -->
     <div class="overflow-x-auto mb-8">
       <table class="table-auto w-full border-collapse border border-gray-200 text-sm">
         <thead class="bg-gray-100">
@@ -55,102 +51,101 @@
       </table>
     </div>
 
-    <!-- กราฟ -->
     <div class="bg-gray-50 rounded-xl p-4 shadow">
       <canvas id="salesChart" height="120"></canvas>
     </div>
   </div>
 
 <script>
-  const SUPABASE_URL = 'https://ocmskhrypxeljgncyffp.supabase.co'; // ใส่ URL ของคุณ
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9jbXNraHJ5cHhlbGpnbmN5ZmZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc5MDcyMzIsImV4cCI6MjA3MzQ4MzIzMn0.clWbGRV1MrUHnWPyTEc66fnjbD8mLqo6fF1V6qiOJa4'; // ใส่ Anon Key ของคุณ
+  const SUPABASE_URL = 'https://ocmskhrypxeljgncyffp.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9jbXNraHJ5cHhlbGpnbmN5ZmZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc5MDcyMzIsImV4cCI6MjA3MzQ4MzIzMn0.clWbGRV1MrUHnWPyTEc66fnjbD8mLqo6fF1V6qiOJa4';
 
-  const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  let salesChartInstance = null; // สร้างตัวแปรสำหรับเก็บ instance ของกราฟ
 
-async function fetchData() {
-  const { data: salesData, error } = await supabase
-    .from('sales')
-    .select('*');
+  async function fetchData() {
+    const { data: salesData, error } = await supabase
+      .from('sales')
+      .select('*');
 
-  if (error) {
-    console.error('Error fetching data:', error.message);
-    return;
+    if (error) {
+      console.error('Error fetching data:', error.message);
+      return;
+    }
+
+    updateSummary(salesData);
+    populateTable(salesData);
+    drawChart(salesData);
   }
 
-  // ส่งข้อมูลที่ได้ไปยังฟังก์ชันย่อย
-  updateSummary(salesData);
-  populateTable(salesData);
-  drawChart(salesData);
-}
+  function updateSummary(salesData) {
+    const totalOrders = salesData.reduce((sum, s) => sum + s.orders, 0);
+    const totalSales = salesData.reduce((sum, s) => sum + s.sales, 0);
+    const totalUnits = salesData.reduce((sum, s) => sum + s.units, 0);
+    const avgBasket = totalOrders > 0 ? (totalSales / totalOrders).toFixed(0) : 0;
 
-// ---- 1) สรุปตัวเลข ----
-function updateSummary(salesData) {
-  const totalOrders = salesData.reduce((sum, s) => sum + s.orders, 0);
-  const totalSales = salesData.reduce((sum, s) => sum + s.sales, 0);
-  const totalUnits = salesData.reduce((sum, s) => sum + s.units, 0);
-  const avgBasket = (totalSales / totalOrders).toFixed(0);
+    document.getElementById('totalOrders').innerText = totalOrders;
+    document.getElementById('totalSales').innerText = "฿" + totalSales.toLocaleString();
+    document.getElementById('totalUnits').innerText = totalUnits;
+    document.getElementById('basketSize').innerText = "฿" + avgBasket;
+    document.getElementById('totalSalespeople').innerText = salesData.length;
+  }
 
-  document.getElementById('totalOrders').innerText = totalOrders;
-  document.getElementById('totalSales').innerText = "฿" + totalSales.toLocaleString();
-  document.getElementById('totalUnits').innerText = totalUnits;
-  document.getElementById('basketSize').innerText = "฿" + avgBasket;
-  document.getElementById('totalSalespeople').innerText = salesData.length;
-}
+  function populateTable(salesData) {
+    const tableBody = document.getElementById('salesTable');
+    tableBody.innerHTML = '';
+    salesData.forEach(s => {
+      const row = `
+        <tr>
+          <td class="border p-2 flex items-center gap-2">
+            <img src="${s.img}" class="w-6 h-6 rounded-full"> ${s.name}
+          </td>
+          <td class="border p-2 text-right">${s.orders}</td>
+          <td class="border p-2 text-right">฿${s.sales.toLocaleString()}</td>
+          <td class="border p-2 text-right">${s.units}</td>
+          <td class="border p-2 text-right">฿${(s.sales / s.orders).toFixed(0)}</td>
+        </tr>`;
+      tableBody.insertAdjacentHTML('beforeend', row);
+    });
+  }
 
-// ---- 2) ตารางข้อมูล ----
-function populateTable(salesData) {
-  const tableBody = document.getElementById('salesTable');
-  tableBody.innerHTML = ''; // เคลียร์ตารางเก่าก่อน
-  salesData.forEach(s => {
-    const row = `
-      <tr>
-        <td class="border p-2 flex items-center gap-2">
-          <img src="${s.img}" class="w-6 h-6 rounded-full"> ${s.name}
-        </td>
-        <td class="border p-2 text-right">${s.orders}</td>
-        <td class="border p-2 text-right">฿${s.sales.toLocaleString()}</td>
-        <td class="border p-2 text-right">${s.units}</td>
-        <td class="border p-2 text-right">฿${(s.sales / s.orders).toFixed(0)}</td>
-      </tr>`;
-    tableBody.insertAdjacentHTML('beforeend', row);
-  });
-}
-
-// ---- 3) กราฟแท่ง ----
-function drawChart(salesData) {
-  const ctx = document.getElementById('salesChart').getContext('2d');
-  new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: salesData.map(s => s.name),
-      datasets: [{
-        label: 'ยอดขาย',
-        data: salesData.map(s => s.sales),
-        backgroundColor: ['#60A5FA', '#FBBF24', '#34D399'],
-        borderRadius: 10
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: function(context) {
-              return "฿" + context.parsed.y.toLocaleString();
+  function drawChart(salesData) {
+    const ctx = document.getElementById('salesChart').getContext('2d');
+    if (salesChartInstance) {
+        salesChartInstance.destroy();
+    }
+    
+    salesChartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: salesData.map(s => s.name),
+        datasets: [{
+          label: 'ยอดขาย',
+          data: salesData.map(s => s.sales),
+          backgroundColor: ['#60A5FA', '#FBBF24', '#34D399'],
+          borderRadius: 10
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return "฿" + context.parsed.y.toLocaleString();
+              }
             }
           }
+        },
+        scales: {
+          y: { beginAtZero: true }
         }
-      },
-      scales: {
-        y: { beginAtZero: true }
       }
-    }
-  });
-}
+    });
+  }
 
-// เรียกใช้ฟังก์ชันหลักเมื่อหน้าเว็บโหลดเสร็จ
-fetchData();
+  document.addEventListener('DOMContentLoaded', fetchData);
 </script>
 </body>
 </html>
