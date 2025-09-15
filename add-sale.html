@@ -66,8 +66,8 @@
 
       const { data: users, error: userError } = await supabase
         .from("userDash")
-        .select("id, password")
-        .eq("id", userId)
+        .select("userName, password")
+        .eq("userName", userId)
         .single();
 
       if (userError || !users) {
