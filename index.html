@@ -86,11 +86,13 @@
         summaryData[salespersonName] = {
           name: salespersonName,
           img: salespersonImg,
-          sales: 0
+          sales: 0,
+          orders: 0 // ✅ เพิ่ม orders กลับมา
         };
       }
 
       summaryData[salespersonName].sales += sale.sales || 0;
+      summaryData[salespersonName].orders += sale.orders || 0; // ✅ เพิ่มการรวมยอด orders
     });
 
     const finalData = Object.values(summaryData);
