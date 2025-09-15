@@ -2,25 +2,57 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>เพิ่มยอดขาย</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    /* Custom font for a more modern look */
+    @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap');
+    body {
+      font-family: 'Sarabun', sans-serif;
+    }
+  </style>
 </head>
-<body>
-  <h2>เพิ่มข้อมูลการขาย</h2>
-  <form id="saleForm">
-    <label>Orders: <input type="number" id="orders" required></label><br>
-    <label>Sales: <input type="number" id="sales" required></label><br>
-    <label>Units: <input type="number" id="units" required></label><br>
-    <label>Password: <input type="password" id="password" required></label><br>
-    <button type="submit">บันทึก</button>
-  </form>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+
+  <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md transform transition duration-500 hover:scale-105">
+    <div class="flex flex-col items-center mb-6">
+      <h2 class="text-3xl font-bold text-gray-800 mb-2">เพิ่มข้อมูลการขาย</h2>
+      <p class="text-gray-500 text-sm">กรุณากรอกข้อมูลเพื่อบันทึกยอดขาย</p>
+    </div>
+
+    <form id="saleForm" class="space-y-6">
+      <div>
+        <label for="orders" class="block text-gray-700 font-medium mb-1">จำนวนรายการ (Orders)</label>
+        <input type="number" id="orders" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-150">
+      </div>
+      
+      <div>
+        <label for="sales" class="block text-gray-700 font-medium mb-1">ยอดขาย (Sales)</label>
+        <input type="number" id="sales" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-150">
+      </div>
+      
+      <div>
+        <label for="units" class="block text-gray-700 font-medium mb-1">จำนวนชิ้น (Units)</label>
+        <input type="number" id="units" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 transition duration-150">
+      </div>
+      
+      <div>
+        <label for="password" class="block text-gray-700 font-medium mb-1">รหัสผ่าน (Password)</label>
+        <input type="password" id="password" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition duration-150">
+      </div>
+
+      <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:bg-blue-700 transition duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">บันทึก</button>
+    </form>
+  </div>
 
   <script>
-    const SUPABASE_URL = 'https://ocmskhrypxeljgncyffp.supabase.co'; // 🔹 ใส่ค่า URL ของคุณ
+    const SUPABASE_URL = 'https://ocmskhrypxeljgncyffp.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9jbXNraHJ5cHhlbGpnbmN5ZmZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc5MDcyMzIsImV4cCI6MjA3MzQ4MzIzMn0.clWbGRV1MrUHnWPyTEc66fnjbD8mLqo6fF1V6qiOJa4';
+
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // ดึง user_id จาก query string
     const urlParams = new URLSearchParams(window.location.search);
     const userId = urlParams.get("user_id");
 
@@ -32,7 +64,6 @@
       const units = parseInt(document.getElementById("units").value);
       const password = document.getElementById("password").value;
 
-      // 1. ตรวจสอบ password ของ user ก่อน
       const { data: users, error: userError } = await supabase
         .from("userDash")
         .select("id, password")
@@ -49,7 +80,6 @@
         return;
       }
 
-      // 2. Insert ข้อมูลการขาย
       const { error: insertError } = await supabase
         .from("sales")
         .insert([{
