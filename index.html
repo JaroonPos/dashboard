@@ -64,7 +64,6 @@
   const SUPABASE_URL = 'https://ocmskhrypxeljgncyffp.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9jbXNraHJ5cHhlbGpnbmN5ZmZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc5MDcyMzIsImV4cCI6MjA3MzQ4MzIzMn0.clWbGRV1MrUHnWPyTEc66fnjbD8mLqo6fF1V6qiOJa4';
 
-  // ✅ ต้องใช้ window.supabase
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   let salesChartInstance = null;
 
@@ -83,15 +82,12 @@
         )
       `);
 
-
     if (error) {
       console.error('Error fetching data:', error.message);
       return;
     }
 
-    console.log("Raw data:", salesData); // ✅ debug ดู data ก่อน
-
-    // รวมข้อมูลตาม Salesperson
+    // ✅ รวมข้อมูลตาม Salesperson
     const summaryData = {};
     salesData.forEach(sale => {
       const salespersonName = sale.userDash?.userName || "Unknown";
@@ -112,12 +108,11 @@
       summaryData[salespersonName].units += sale.units || 0;
     });
 
-
     const finalData = Object.values(summaryData);
 
     updateSummary(finalData);
     populateTable(finalData);
-    drawChart(finalData);
+    drawOrUpdateChart(finalData);
   }
 
   function updateSummary(salesData) {
@@ -140,7 +135,9 @@
       const row = `
         <tr>
           <td class="border p-2 flex items-center gap-2">
-            <a href="add-sale.html?user_id=${s.name}"><img src="${s.img}" class="w-6 h-6 rounded-full"> ${s.name}</a>
+            <a href="add-sale.html?user_id=${s.name}">
+              <img src="${s.img}" class="w-6 h-6 rounded-full"> ${s.name}
+            </a>
           </td>
           <td class="border p-2 text-right">${s.orders}</td>
           <td class="border p-2 text-right">฿${s.sales.toLocaleString()}</td>
@@ -151,44 +148,60 @@
     });
   }
 
-  function drawChart(salesData) {
+  function drawOrUpdateChart(salesData) {
     const ctx = document.getElementById('salesChart').getContext('2d');
-    if (salesChartInstance) {
-        salesChartInstance.destroy();
-    }
-    
-    salesChartInstance = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: salesData.map(s => s.name),
-        datasets: [{
-          label: 'ยอดขาย',
-          data: salesData.map(s => s.sales),
-          backgroundColor: ['#60A5FA', '#FBBF24', '#34D399', '#F472B6', '#A78BFA'],
-          borderRadius: 10
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: {
-              label: function(context) {
-                return "฿" + context.parsed.y.toLocaleString();
+
+    const newLabels = salesData.map(s => s.name);
+    const newSales = salesData.map(s => s.sales);
+
+    if (!salesChartInstance) {
+      // ✅ สร้าง chart ครั้งแรก
+      salesChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: newLabels,
+          datasets: [{
+            label: 'ยอดขาย',
+            data: newSales,
+            backgroundColor: ['#60A5FA', '#FBBF24', '#34D399', '#F472B6', '#A78BFA'],
+            borderRadius: 10
+          }]
+        },
+        options: {
+          responsive: true,
+          animation: {
+            duration: 800, // ทำให้ smooth
+            easing: 'easeOutQuart'
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return "฿" + context.parsed.y.toLocaleString();
+                }
               }
             }
+          },
+          scales: {
+            y: { beginAtZero: true }
           }
-        },
-        scales: {
-          y: { beginAtZero: true }
         }
-      }
-    });
+      });
+    } else {
+      // ✅ update chart แทนการ destroy/re-create
+      salesChartInstance.data.labels = newLabels;
+      salesChartInstance.data.datasets[0].data = newSales;
+      salesChartInstance.update();
+    }
   }
 
-  // ✅ ต้องเรียก fetchDataAndRender
+  // ✅ โหลดครั้งแรก
   document.addEventListener('DOMContentLoaded', fetchDataAndRender);
+
+  // ✅ รีเฟรชข้อมูลทุก 1 นาที
+  setInterval(fetchDataAndRender, 60000);
 </script>
+
 </body>
 </html>
