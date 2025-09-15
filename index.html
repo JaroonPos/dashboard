@@ -13,7 +13,6 @@
   <div class="max-w-6xl mx-auto bg-white rounded-2xl shadow-lg p-6">
     <h1 class="text-3xl font-bold text-center mb-6">Sales Dashboard</h1>
 
-    <!-- Summary Cards -->
     <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
       <div class="bg-blue-50 p-4 rounded-xl text-center shadow">
         <p class="text-gray-500 text-sm">Total Orders</p>
@@ -37,23 +36,9 @@
       </div>
     </div>
 
-    <!-- Table -->
-    <div class="overflow-x-auto mb-8">
-      <table class="table-auto w-full border-collapse border border-gray-200 text-sm">
-        <thead class="bg-gray-100">
-          <tr>
-            <th class="border p-2 text-left">Salesperson</th>
-            <th class="border p-2 text-right">Orders</th>
-            <th class="border p-2 text-right">Total Sales</th>
-            <th class="border p-2 text-right">Units</th>
-            <th class="border p-2 text-right">Avg. Basket</th>
-          </tr>
-        </thead>
-        <tbody id="salesTable"></tbody>
-      </table>
-    </div>
+    <div id="salespersonCards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+      </div>
 
-    <!-- Chart -->
     <div class="bg-gray-50 rounded-xl p-4 shadow">
       <canvas id="salesChart" height="120"></canvas>
     </div>
@@ -110,9 +95,42 @@
     const finalData = Object.values(summaryData);
 
     updateSummary(finalData);
-    populateTable(finalData);
+    populateCards(finalData); // เปลี่ยนชื่อ function
     drawOrUpdateChart(finalData);
   }
+
+  // ✅ เปลี่ยน function populateTable เป็น populateCards
+  function populateCards(salesData) {
+    const cardsContainer = document.getElementById('salespersonCards');
+    cardsContainer.innerHTML = '';
+    
+    // กำหนดสีต่างๆ เพื่อให้ card มีสีสัน
+    const colors = ['bg-blue-100', 'bg-green-100', 'bg-yellow-100', 'bg-purple-100', 'bg-pink-100', 'bg-indigo-100'];
+
+    salesData.forEach((s, index) => {
+      const cardColor = colors[index % colors.length]; // วนใช้สี
+      const card = `
+        <div class="${cardColor} p-4 rounded-xl text-center shadow">
+          <div class="flex flex-col items-center mb-2">
+            <img src="${s.img}" class="w-12 h-12 rounded-full mb-2 border-2 border-white shadow-md">
+            <a href="add-sale.html?user_id=${s.name}" class="font-bold text-lg">${s.name}</a>
+          </div>
+          <div class="grid grid-cols-2 gap-2 text-sm text-gray-700">
+            <div class="flex flex-col">
+              <span class="font-semibold text-gray-600">ยอดขายรวม</span>
+              <span class="text-xl font-bold text-green-700">฿${s.sales.toLocaleString()}</span>
+            </div>
+            <div class="flex flex-col">
+              <span class="font-semibold text-gray-600">ออเดอร์</span>
+              <span class="text-xl font-bold">${s.orders}</span>
+            </div>
+          </div>
+        </div>
+      `;
+      cardsContainer.insertAdjacentHTML('beforeend', card);
+    });
+  }
+
 
   function updateSummary(salesData) {
     const totalOrders = salesData.reduce((sum, s) => sum + s.orders, 0);
@@ -125,24 +143,6 @@
     document.getElementById('totalUnits').innerText = totalUnits;
     document.getElementById('basketSize').innerText = "฿" + avgBasket;
     document.getElementById('totalSalespeople').innerText = salesData.length;
-  }
-
-  function populateTable(salesData) {
-    const tableBody = document.getElementById('salesTable');
-    tableBody.innerHTML = '';
-    salesData.forEach(s => {
-      const row = `
-        <tr>
-          <td class="border p-2 flex items-center gap-2">
-            <img src="${s.img}" class="w-6 h-6 rounded-full"><a href="add-sale.html?user_id=${s.name}"> ${s.name} </a>
-          </td>
-          <td class="border p-2 text-right">${s.orders}</td>
-          <td class="border p-2 text-right">฿${s.sales.toLocaleString()}</td>
-          <td class="border p-2 text-right">${s.units}</td>
-          <td class="border p-2 text-right">฿${(s.orders > 0 ? (s.sales / s.orders).toFixed(0) : 0)}</td>
-        </tr>`;
-      tableBody.insertAdjacentHTML('beforeend', row);
-    });
   }
 
   function drawOrUpdateChart(salesData) {
