@@ -94,6 +94,9 @@
 
     const finalData = Object.values(summaryData);
 
+    // ✅ เรียงลำดับข้อมูลตามยอดขายจากมากไปหาน้อย
+    finalData.sort((a, b) => b.sales - a.sales);
+
     updateSummary(finalData);
     populateCards(finalData);
     drawOrUpdateChart(finalData);
@@ -117,10 +120,6 @@
             <div class="mb-1">
               <span class="font-semibold text-gray-600">ยอดขายรวม</span>
               <span class="text-lg font-bold text-green-700 block">฿${s.sales.toLocaleString()}</span>
-            </div>
-            <div>
-              <span class="font-semibold text-gray-600">ออเดอร์</span>
-              <span class="text-lg font-bold block">${s.orders}</span>
             </div>
           </div>
         </div>
