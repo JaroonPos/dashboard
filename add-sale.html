@@ -53,8 +53,9 @@
 
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    // ดึง userName จาก query string แทน user_id
     const urlParams = new URLSearchParams(window.location.search);
-    const userId = urlParams.get("user_id");
+    const userName = urlParams.get("userName");
 
     document.getElementById("saleForm").addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -64,29 +65,34 @@
       const units = parseInt(document.getElementById("units").value);
       const password = document.getElementById("password").value;
 
-      const { data: users, error: userError } = await supabase
+      // 1. ค้นหา user_id และ password จาก userName ที่ส่งมา
+      const { data: user, error: userError } = await supabase
         .from("userDash")
-        .select("userName, password")
-        .eq("userName", userId)
+        .select("id, password")
+        .eq("userName", userName)
         .single();
 
-      if (userError || !users) {
-        alert("ไม่พบผู้ใช้");
+      if (userError || !user) {
+        alert("ไม่พบผู้ใช้ที่ต้องการบันทึกข้อมูล");
         return;
       }
 
-      if (users.password !== password) {
+      if (user.password !== password) {
         alert("รหัสผ่านไม่ถูกต้อง");
         return;
       }
 
-      const { error: insertError } = await supabase
-        .from("sales")
-        .insert([{
-          user_id: userId,
-          orders,
-          sales,
-          units
+      const userId = user.id;
+
+      // 2. Insert ข้อมูลการขาย
+        const { error: insertError } = await supabase
+            .from("sales")
+            .insert([{
+            user_id: userId,
+            name: userName, // เพิ่มบรรทัดนี้เพื่อบันทึกชื่อผู้ใช้
+            orders,
+            sales,
+            units
         }]);
 
       if (insertError) {
