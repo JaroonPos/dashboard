@@ -70,7 +70,18 @@
   async function fetchDataAndRender() {
     const { data: salesData, error } = await supabase
       .from('sales')
-      .select('*, userDash(name, img)'); // join ต้องมี relation ใน Supabase
+      .select(`
+        id,
+        orders,
+        sales,
+        units,
+        userDash (
+          id,
+          userName,
+          img
+        )
+      `);
+
 
     if (error) {
       console.error('Error fetching data:', error.message);
@@ -82,7 +93,7 @@
     // รวมข้อมูลตาม Salesperson
     const summaryData = {};
     salesData.forEach(sale => {
-      const salespersonName = sale.userDash?.name || "Unknown";
+      const salespersonName = sale.userDash?.userName || "Unknown";
       const salespersonImg = sale.userDash?.img || "https://via.placeholder.com/40";
 
       if (!summaryData[salespersonName]) {
@@ -99,6 +110,7 @@
       summaryData[salespersonName].sales += sale.sales || 0;
       summaryData[salespersonName].units += sale.units || 0;
     });
+
 
     const finalData = Object.values(summaryData);
 
