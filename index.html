@@ -68,68 +68,66 @@
   let salesChartInstance = null;
 
   async function fetchDataAndRender() {
-    const { data: salesData, error } = await supabase
-      .from("sales")
-      .select("id, name, orders, sales, units, userDash(id, userName, img)");
+  const { data, error } = await supabase
+    .from("sales")
+    .select(`
+      id,
+      orders,
+      sales,
+      units,
+      userDash (
+        id,
+        userName,
+        img
+      )
+    `);
 
-    if (error) {
-      console.error('Error fetching data:', error.message);
-      return;
+  if (error) {
+    console.error('Error fetching data:', error.message);
+    return;
+  }
+
+  console.log("Raw data:", data); // ✅ debug ดูข้อมูลจริง
+
+  // รวมข้อมูลตาม Salesperson
+  const summaryData = {};
+  data.forEach(sale => {
+    const salespersonId = sale.userDash?.id || 0;
+    const salespersonName = sale.userDash?.userName || "Unknown";
+    const salespersonImg = sale.userDash?.img || "https://via.placeholder.com/40";
+
+    if (!summaryData[salespersonId]) {
+      summaryData[salespersonId] = {
+        id: salespersonId,
+        name: salespersonName,
+        img: salespersonImg,
+        orders: 0,
+        sales: 0,
+        units: 0
+      };
     }
 
-    console.log("Raw data:", salesData); // ✅ debug ดู data ก่อน
+    summaryData[salespersonId].orders += sale.orders || 0;
+    summaryData[salespersonId].sales += sale.sales || 0;
+    summaryData[salespersonId].units += sale.units || 0;
+  });
 
-    // รวมข้อมูลตาม Salesperson
-    const summaryData = {};
-    salesData.forEach(sale => {
-      const salespersonName = sale.userDash?.userName || "Unknown";
-      const salespersonImg = sale.userDash?.img || "https://via.placeholder.com/40";
+  const finalData = Object.values(summaryData);
 
-      if (!summaryData[salespersonName]) {
-        summaryData[salespersonName] = {
-          name: salespersonName,
-          img: salespersonImg,
-          orders: 0,
-          sales: 0,
-          units: 0
-        };
-      }
+  updateSummary(finalData);
+  populateTable(finalData);
+  drawChart(finalData);
+}
 
-      summaryData[salespersonName].orders += sale.orders || 0;
-      summaryData[salespersonName].sales += sale.sales || 0;
-      summaryData[salespersonName].units += sale.units || 0;
-    });
-
-
-    const finalData = Object.values(summaryData);
-
-    updateSummary(finalData);
-    populateTable(finalData);
-    drawChart(finalData);
-  }
-
-  function updateSummary(salesData) {
-    const totalOrders = salesData.reduce((sum, s) => sum + s.orders, 0);
-    const totalSales = salesData.reduce((sum, s) => sum + s.sales, 0);
-    const totalUnits = salesData.reduce((sum, s) => sum + s.units, 0);
-    const avgBasket = totalOrders > 0 ? (totalSales / totalOrders).toFixed(0) : 0;
-
-    document.getElementById('totalOrders').innerText = totalOrders;
-    document.getElementById('totalSales').innerText = "฿" + totalSales.toLocaleString();
-    document.getElementById('totalUnits').innerText = totalUnits;
-    document.getElementById('basketSize').innerText = "฿" + avgBasket;
-    document.getElementById('totalSalespeople').innerText = salesData.length;
-  }
-
-  function populateTable(salesData) {
+function populateTable(salesData) {
   const tableBody = document.getElementById('salesTable');
   tableBody.innerHTML = '';
   salesData.forEach(s => {
     const row = `
       <tr>
         <td class="border p-2 flex items-center gap-2">
-          <a href="add-sale.html?user_id=${s.userDash.id}">
-            <img src="${s.userDash.img}" class="w-6 h-6 rounded-full"> ${s.userDash.userName}
+          <a href="add-sale.html?user_id=${s.id}">
+            <img src="${s.img}" class="w-6 h-6 rounded-full"> ${s.name}
           </a>
         </td>
         <td class="border p-2 text-right">${s.orders}</td>
@@ -140,6 +138,7 @@
     tableBody.insertAdjacentHTML('beforeend', row);
   });
 }
+
 
 
   function drawChart(salesData) {
