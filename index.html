@@ -3,14 +3,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>My First WebApp</title>
+  <title>Sales Dashboard</title>
   <link rel="stylesheet" href="style.css">
+  <!-- โหลด Chart.js จาก CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <div class="container">
-    <h1>สวัสดีจาก GitHub Pages 🎉</h1>
-    <p id="msg">กดปุ่มเพื่อเปลี่ยนข้อความ</p>
-    <button id="btn">กดเลย</button>
+    <h1>Sales Dashboard</h1>
+    <canvas id="salesChart"></canvas>
   </div>
   <script src="script.js"></script>
 </body>

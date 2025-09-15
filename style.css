@@ -1,3 +1,23 @@
-body { font-family: Arial, sans-serif; display:flex; align-items:center; justify-content:center; height:100vh; margin:0; background:#f4f6f8; }
-.container { text-align:center; background:white; padding:30px; border-radius:12px; box-shadow:0 6px 20px rgba(0,0,0,0.08); }
-button { padding:10px 18px; border-radius:8px; border:0; cursor:pointer; }
+body {
+  font-family: Arial, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: #f4f6f8;
+  margin: 0;
+}
+
+.container {
+  width: 90%;
+  max-width: 900px;
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 30px;
+}
