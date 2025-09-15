@@ -139,7 +139,7 @@
       const row = `
         <tr>
           <td class="border p-2 flex items-center gap-2">
-            <a href="add-sale.html?user_id=${s.id}"><img src="${s.img}" class="w-6 h-6 rounded-full"> ${s.name}</a>
+            <a href="add-sale.html?user_id=${s.userDash.id}"><img src="${s.img}" class="w-6 h-6 rounded-full"> ${s.name}</a>
           </td>
           <td class="border p-2 text-right">${s.orders}</td>
           <td class="border p-2 text-right">฿${s.sales.toLocaleString()}</td>
