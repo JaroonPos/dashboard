@@ -87,12 +87,14 @@
           name: salespersonName,
           img: salespersonImg,
           sales: 0,
-          orders: 0 // ✅ เพิ่ม orders กลับมา
+          orders: 0,
+          units: 0 // ✅ เพิ่ม units กลับมา
         };
       }
 
       summaryData[salespersonName].sales += sale.sales || 0;
-      summaryData[salespersonName].orders += sale.orders || 0; // ✅ เพิ่มการรวมยอด orders
+      summaryData[salespersonName].orders += sale.orders || 0;
+      summaryData[salespersonName].units += sale.units || 0; // ✅ เพิ่มการรวมยอด units
     });
 
     const finalData = Object.values(summaryData);
@@ -133,13 +135,13 @@
   function updateSummary(salesData) {
     const totalOrders = salesData.reduce((sum, s) => sum + s.orders, 0);
     const totalSales = salesData.reduce((sum, s) => sum + s.sales, 0);
-    const totalUnits = salesData.reduce((sum, s) => sum + s.units, 0);
-    const avgBasket = totalOrders > 0 ? (totalSales / totalOrders).toFixed(0) : 0;
+    const totalUnits = salesData.reduce((sum, s) => sum + s.units, 0); // ✅ กลับมาคำนวณ totalUnits
+    const avgBasket = totalOrders > 0 ? (totalSales / totalOrders).toFixed(0) : 0; // ✅ กลับมาคำนวณ avgBasket
 
     document.getElementById('totalOrders').innerText = totalOrders;
     document.getElementById('totalSales').innerText = "฿" + totalSales.toLocaleString();
-    document.getElementById('totalUnits').innerText = totalUnits;
-    document.getElementById('basketSize').innerText = "฿" + avgBasket;
+    document.getElementById('totalUnits').innerText = totalUnits; // ✅ กลับมาอัปเดตค่า totalUnits
+    document.getElementById('basketSize').innerText = "฿" + avgBasket; // ✅ กลับมาอัปเดตค่า avgBasket
     document.getElementById('totalSalespeople').innerText = salesData.length;
   }
 
