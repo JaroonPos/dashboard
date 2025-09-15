@@ -1,18 +1,129 @@
-<!doctype html>
-<html lang="th">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sales Dashboard</title>
-  <link rel="stylesheet" href="style.css">
-  <!-- โหลด Chart.js จาก CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body>
-  <div class="container">
-    <h1>Sales Dashboard</h1>
-    <canvas id="salesChart"></canvas>
+<body class="bg-gray-100 p-6">
+
+  <div class="max-w-6xl mx-auto bg-white rounded-2xl shadow-lg p-6">
+    <!-- หัวข้อ -->
+    <h1 class="text-3xl font-bold text-center mb-6">Sales Dashboard</h1>
+
+    <!-- การ์ดสรุป -->
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+      <div class="bg-blue-50 p-4 rounded-xl text-center shadow">
+        <p class="text-gray-500 text-sm">Total Orders</p>
+        <p class="text-2xl font-bold" id="totalOrders">0</p>
+      </div>
+      <div class="bg-green-50 p-4 rounded-xl text-center shadow">
+        <p class="text-gray-500 text-sm">Total Sales</p>
+        <p class="text-2xl font-bold" id="totalSales">฿0</p>
+      </div>
+      <div class="bg-yellow-50 p-4 rounded-xl text-center shadow">
+        <p class="text-gray-500 text-sm">Avg Basket Size</p>
+        <p class="text-2xl font-bold" id="basketSize">0</p>
+      </div>
+      <div class="bg-purple-50 p-4 rounded-xl text-center shadow">
+        <p class="text-gray-500 text-sm">Units Sold</p>
+        <p class="text-2xl font-bold" id="totalUnits">0</p>
+      </div>
+      <div class="bg-pink-50 p-4 rounded-xl text-center shadow">
+        <p class="text-gray-500 text-sm">Salespeople</p>
+        <p class="text-2xl font-bold" id="totalSalespeople">0</p>
+      </div>
+    </div>
+
+    <!-- ตารางข้อมูล -->
+    <div class="overflow-x-auto mb-8">
+      <table class="table-auto w-full border-collapse border border-gray-200 text-sm">
+        <thead class="bg-gray-100">
+          <tr>
+            <th class="border p-2 text-left">Salesperson</th>
+            <th class="border p-2 text-right">Orders</th>
+            <th class="border p-2 text-right">Total Sales</th>
+            <th class="border p-2 text-right">Units</th>
+            <th class="border p-2 text-right">Avg. Basket</th>
+          </tr>
+        </thead>
+        <tbody id="salesTable"></tbody>
+      </table>
+    </div>
+
+    <!-- กราฟ -->
+    <div class="bg-gray-50 rounded-xl p-4 shadow">
+      <canvas id="salesChart" height="120"></canvas>
+    </div>
   </div>
-  <script src="script.js"></script>
+
+<script>
+const salesData = [
+  { name: "Alice", orders: 30, sales: 12000, units: 120, img: "images/alice.png" },
+  { name: "Bob", orders: 25, sales: 9500, units: 95, img: "images/bob.png" },
+  { name: "Charlie", orders: 40, sales: 14000, units: 140, img: "images/charlie.png" }
+];
+
+// ---- 1) สรุปตัวเลข ----
+const totalOrders = salesData.reduce((sum, s) => sum + s.orders, 0);
+const totalSales = salesData.reduce((sum, s) => sum + s.sales, 0);
+const totalUnits = salesData.reduce((sum, s) => sum + s.units, 0);
+const avgBasket = (totalSales / totalOrders).toFixed(0);
+
+document.getElementById('totalOrders').innerText = totalOrders;
+document.getElementById('totalSales').innerText = "฿" + totalSales.toLocaleString();
+document.getElementById('totalUnits').innerText = totalUnits;
+document.getElementById('basketSize').innerText = "฿" + avgBasket;
+document.getElementById('totalSalespeople').innerText = salesData.length;
+
+// ---- 2) ตารางข้อมูล ----
+const tableBody = document.getElementById('salesTable');
+salesData.forEach(s => {
+  const row = `
+    <tr>
+      <td class="border p-2 flex items-center gap-2">
+        <img src="${s.img}" class="w-6 h-6 rounded-full"> ${s.name}
+      </td>
+      <td class="border p-2 text-right">${s.orders}</td>
+      <td class="border p-2 text-right">฿${s.sales.toLocaleString()}</td>
+      <td class="border p-2 text-right">${s.units}</td>
+      <td class="border p-2 text-right">฿${(s.sales / s.orders).toFixed(0)}</td>
+    </tr>`;
+  tableBody.insertAdjacentHTML('beforeend', row);
+});
+
+// ---- 3) กราฟแท่ง ----
+const ctx = document.getElementById('salesChart').getContext('2d');
+new Chart(ctx, {
+  type: 'bar',
+  data: {
+    labels: salesData.map(s => s.name),
+    datasets: [{
+      label: 'ยอดขาย',
+      data: salesData.map(s => s.sales),
+      backgroundColor: ['#60A5FA', '#FBBF24', '#34D399'],
+      borderRadius: 10
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            return "฿" + context.parsed.y.toLocaleString();
+          }
+        }
+      }
+    },
+    scales: {
+      y: { beginAtZero: true }
+    }
+  }
+});
+</script>
 </body>
 </html>
