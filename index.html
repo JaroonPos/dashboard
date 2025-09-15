@@ -7,11 +7,12 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://unpkg.com/@heroicons/24/outline"></script>
 </head>
 <body class="bg-gray-100 p-6">
 
   <div class="max-w-6xl mx-auto bg-white rounded-2xl shadow-lg p-6">
-    <h1 class="text-3xl font-bold text-center mb-6"><a href="add-sale.html">Sales Dashboard</a></h1>
+    <h1 class="text-3xl font-bold text-center mb-6">Sales Dashboard</h1>
 
     <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
       <div class="bg-blue-50 p-4 rounded-xl text-center shadow">
@@ -51,9 +52,7 @@
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   let salesChartInstance = null;
 
-  // ✅ กำหนดชุดสีหลักสำหรับ Box Cards (Tailwind)
   const cardColors = ['bg-blue-200', 'bg-green-200', 'bg-yellow-200', 'bg-purple-200', 'bg-pink-200', 'bg-indigo-200', 'bg-red-200', 'bg-teal-200', 'bg-orange-200'];
-  // ✅ กำหนดชุดสีหลักสำหรับ Chart (Hex Code)
   const chartColors = ['#60A5FA', '#34D399', '#FBBF24', '#A78BFA', '#F472B6', '#6366F1', '#EF4444', '#14B8A6', '#F97316'];
 
   async function fetchDataAndRender() {
@@ -76,7 +75,6 @@
       return;
     }
 
-    // ✅ รวมข้อมูลตาม Salesperson
     const summaryData = {};
     salesData.forEach(sale => {
       const salespersonName = sale.userDash?.userName || "Unknown";
@@ -88,23 +86,33 @@
           img: salespersonImg,
           sales: 0,
           orders: 0,
-          units: 0 // ✅ เพิ่ม units กลับมา
+          units: 0
         };
       }
 
       summaryData[salespersonName].sales += sale.sales || 0;
       summaryData[salespersonName].orders += sale.orders || 0;
-      summaryData[salespersonName].units += sale.units || 0; // ✅ เพิ่มการรวมยอด units
+      summaryData[salespersonName].units += sale.units || 0;
     });
 
     const finalData = Object.values(summaryData);
-
-    // ✅ เรียงลำดับข้อมูลตามยอดขายจากมากไปหาน้อย
     finalData.sort((a, b) => b.sales - a.sales);
 
     updateSummary(finalData);
     populateCards(finalData);
     drawOrUpdateChart(finalData);
+  }
+  
+  // ✅ สร้างฟังก์ชันสำหรับรับไอคอนเหรียญ
+  function getMedalIcon(index) {
+    if (index === 0) {
+      return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="gold" class="w-6 h-6"><path fill-rule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.076 4.991 5.403.471c1.112.097 1.581 1.403.666 2.108l-4.148 3.564 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.597 21.45c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.148-3.564c-.915-.705-.446-2.011.666-2.108l5.403-.471 2.076-4.991z" clip-rule="evenodd" /></svg>';
+    } else if (index === 1) {
+      return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="silver" class="w-6 h-6"><path fill-rule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.076 4.991 5.403.471c1.112.097 1.581 1.403.666 2.108l-4.148 3.564 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.597 21.45c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.148-3.564c-.915-.705-.446-2.011.666-2.108l5.403-.471 2.076-4.991z" clip-rule="evenodd" /></svg>';
+    } else if (index === 2) {
+      return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#CD7F32" class="w-6 h-6"><path fill-rule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.076 4.991 5.403.471c1.112.097 1.581 1.403.666 2.108l-4.148 3.564 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.597 21.45c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.148-3.564c-.915-.705-.446-2.011.666-2.108l5.403-.471 2.076-4.991z" clip-rule="evenodd" /></svg>';
+    }
+    return '';
   }
 
   function populateCards(salesData) {
@@ -112,17 +120,19 @@
     cardsContainer.innerHTML = '';
     
     salesData.forEach((s, index) => {
-      const cardColor = cardColors[index % cardColors.length]; // ใช้ cardColors
+      const cardColor = cardColors[index % cardColors.length];
+      const medalIcon = getMedalIcon(index); // ✅ รับไอคอนเหรียญ
+
       const card = `
-        <div class="${cardColor} p-3 rounded-xl text-center shadow flex flex-col items-center">
-          <div class="mb-2">
-            <img src="${s.img}" class="w-8 h-8 rounded-full mb-1 border-2 border-white shadow-md">
+        <div class="${cardColor} p-3 rounded-xl shadow flex items-center justify-between">
+          <div class="flex items-center">
+            <img src="${s.img}" class="w-10 h-10 rounded-full border-2 border-white shadow-md mr-3">
             <a href="add-sale.html?user_id=${s.name}" class="font-semibold text-md">${s.name}</a>
           </div>
-          <div class="flex flex-col text-sm text-gray-700">
-            <div class="mb-1">
-              <span class="font-semibold text-gray-600">ยอดขายรวม</span>
-              <span class="text-lg font-bold text-green-700 block">฿${s.sales.toLocaleString()}</span>
+          <div class="flex items-center space-x-2">
+            ${medalIcon} <div class="flex flex-col text-right">
+              <span class="font-semibold text-gray-600 text-xs">ยอดขายรวม</span>
+              <span class="text-lg font-bold text-green-700">฿${s.sales.toLocaleString()}</span>
             </div>
           </div>
         </div>
@@ -135,13 +145,13 @@
   function updateSummary(salesData) {
     const totalOrders = salesData.reduce((sum, s) => sum + s.orders, 0);
     const totalSales = salesData.reduce((sum, s) => sum + s.sales, 0);
-    const totalUnits = salesData.reduce((sum, s) => sum + s.units, 0); // ✅ กลับมาคำนวณ totalUnits
-    const avgBasket = totalOrders > 0 ? (totalSales / totalOrders).toFixed(0) : 0; // ✅ กลับมาคำนวณ avgBasket
+    const totalUnits = salesData.reduce((sum, s) => sum + s.units, 0);
+    const avgBasket = totalOrders > 0 ? (totalSales / totalOrders).toFixed(0) : 0;
 
     document.getElementById('totalOrders').innerText = totalOrders;
     document.getElementById('totalSales').innerText = "฿" + totalSales.toLocaleString();
-    document.getElementById('totalUnits').innerText = totalUnits; // ✅ กลับมาอัปเดตค่า totalUnits
-    document.getElementById('basketSize').innerText = "฿" + avgBasket; // ✅ กลับมาอัปเดตค่า avgBasket
+    document.getElementById('totalUnits').innerText = totalUnits;
+    document.getElementById('basketSize').innerText = "฿" + avgBasket;
     document.getElementById('totalSalespeople').innerText = salesData.length;
   }
 
@@ -152,7 +162,6 @@
     const newSales = salesData.map(s => s.sales);
 
     if (!salesChartInstance) {
-      // ✅ สร้าง chart ครั้งแรก
       salesChartInstance = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -160,7 +169,7 @@
           datasets: [{
             label: 'ยอดขาย',
             data: newSales,
-            backgroundColor: chartColors, // ใช้ chartColors
+            backgroundColor: chartColors,
             borderRadius: 10
           }]
         },
