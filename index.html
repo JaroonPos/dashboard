@@ -63,20 +63,46 @@
   const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   let salesChartInstance = null; // สร้างตัวแปรสำหรับเก็บ instance ของกราฟ
 
-  async function fetchData() {
+  async function fetchDataAndRender() {
     const { data: salesData, error } = await supabase
       .from('sales')
-      .select('*');
+      .select('*, userDash(name, img)'); // ดึงข้อมูลจาก sales และ join กับ userDash เพื่อดึงชื่อและรูปภาพ
 
     if (error) {
       console.error('Error fetching data:', error.message);
       return;
     }
 
-    updateSummary(salesData);
-    populateTable(salesData);
-    drawChart(salesData);
-  }
+    // สร้าง Object เพื่อเก็บข้อมูลรวมของแต่ละ Salesperson
+    const summaryData = {};
+
+    salesData.forEach(sale => {
+      const salespersonName = sale.userDash.name;
+      const salespersonImg = sale.userDash.img;
+
+      if (!summaryData[salespersonName]) {
+        summaryData[salespersonName] = {
+          name: salespersonName,
+          img: salespersonImg,
+          orders: 0,
+          sales: 0,
+          units: 0
+        };
+    }
+
+    summaryData[salespersonName].orders += sale.orders;
+    summaryData[salespersonName].sales += sale.sales;
+    summaryData[salespersonName].units += sale.units;
+  });
+
+  // แปลง Object เป็น Array เพื่อนำไปแสดงผล
+  const finalData = Object.values(summaryData);
+
+  // ส่งข้อมูลที่ได้ไปยังฟังก์ชันย่อย
+  updateSummary(finalData);
+  populateTable(finalData);
+  drawChart(finalData);
+}
 
   function updateSummary(salesData) {
     const totalOrders = salesData.reduce((sum, s) => sum + s.orders, 0);
