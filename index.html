@@ -13,6 +13,7 @@
   <div class="max-w-6xl mx-auto bg-white rounded-2xl shadow-lg p-6">
     <h1 class="text-3xl font-bold text-center mb-6">Sales Dashboard</h1>
 
+    <!-- Summary Cards -->
     <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
       <div class="bg-blue-50 p-4 rounded-xl text-center shadow">
         <p class="text-gray-500 text-sm">Total Orders</p>
@@ -36,6 +37,7 @@
       </div>
     </div>
 
+    <!-- Table -->
     <div class="overflow-x-auto mb-8">
       <table class="table-auto w-full border-collapse border border-gray-200 text-sm">
         <thead class="bg-gray-100">
@@ -51,6 +53,7 @@
       </table>
     </div>
 
+    <!-- Chart -->
     <div class="bg-gray-50 rounded-xl p-4 shadow">
       <canvas id="salesChart" height="120"></canvas>
     </div>
@@ -60,25 +63,27 @@
   const SUPABASE_URL = 'https://ocmskhrypxeljgncyffp.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9jbXNraHJ5cHhlbGpnbmN5ZmZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc5MDcyMzIsImV4cCI6MjA3MzQ4MzIzMn0.clWbGRV1MrUHnWPyTEc66fnjbD8mLqo6fF1V6qiOJa4';
 
-  const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  let salesChartInstance = null; // สร้างตัวแปรสำหรับเก็บ instance ของกราฟ
+  // ✅ ต้องใช้ window.supabase
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  let salesChartInstance = null;
 
   async function fetchDataAndRender() {
     const { data: salesData, error } = await supabase
       .from('sales')
-      .select('*, userDash(name, img)'); // ดึงข้อมูลจาก sales และ join กับ userDash เพื่อดึงชื่อและรูปภาพ
+      .select('*, userDash(name, img)'); // join ต้องมี relation ใน Supabase
 
     if (error) {
       console.error('Error fetching data:', error.message);
       return;
     }
 
-    // สร้าง Object เพื่อเก็บข้อมูลรวมของแต่ละ Salesperson
-    const summaryData = {};
+    console.log("Raw data:", salesData); // ✅ debug ดู data ก่อน
 
+    // รวมข้อมูลตาม Salesperson
+    const summaryData = {};
     salesData.forEach(sale => {
-      const salespersonName = sale.userDash.name;
-      const salespersonImg = sale.userDash.img;
+      const salespersonName = sale.userDash?.name || "Unknown";
+      const salespersonImg = sale.userDash?.img || "https://via.placeholder.com/40";
 
       if (!summaryData[salespersonName]) {
         summaryData[salespersonName] = {
@@ -88,21 +93,19 @@
           sales: 0,
           units: 0
         };
-    }
+      }
 
-    summaryData[salespersonName].orders += sale.orders;
-    summaryData[salespersonName].sales += sale.sales;
-    summaryData[salespersonName].units += sale.units;
-  });
+      summaryData[salespersonName].orders += sale.orders || 0;
+      summaryData[salespersonName].sales += sale.sales || 0;
+      summaryData[salespersonName].units += sale.units || 0;
+    });
 
-  // แปลง Object เป็น Array เพื่อนำไปแสดงผล
-  const finalData = Object.values(summaryData);
+    const finalData = Object.values(summaryData);
 
-  // ส่งข้อมูลที่ได้ไปยังฟังก์ชันย่อย
-  updateSummary(finalData);
-  populateTable(finalData);
-  drawChart(finalData);
-}
+    updateSummary(finalData);
+    populateTable(finalData);
+    drawChart(finalData);
+  }
 
   function updateSummary(salesData) {
     const totalOrders = salesData.reduce((sum, s) => sum + s.orders, 0);
@@ -129,7 +132,7 @@
           <td class="border p-2 text-right">${s.orders}</td>
           <td class="border p-2 text-right">฿${s.sales.toLocaleString()}</td>
           <td class="border p-2 text-right">${s.units}</td>
-          <td class="border p-2 text-right">฿${(s.sales / s.orders).toFixed(0)}</td>
+          <td class="border p-2 text-right">฿${(s.orders > 0 ? (s.sales / s.orders).toFixed(0) : 0)}</td>
         </tr>`;
       tableBody.insertAdjacentHTML('beforeend', row);
     });
@@ -148,7 +151,7 @@
         datasets: [{
           label: 'ยอดขาย',
           data: salesData.map(s => s.sales),
-          backgroundColor: ['#60A5FA', '#FBBF24', '#34D399'],
+          backgroundColor: ['#60A5FA', '#FBBF24', '#34D399', '#F472B6', '#A78BFA'],
           borderRadius: 10
         }]
       },
@@ -171,7 +174,8 @@
     });
   }
 
-  document.addEventListener('DOMContentLoaded', fetchData);
+  // ✅ ต้องเรียก fetchDataAndRender
+  document.addEventListener('DOMContentLoaded', fetchDataAndRender);
 </script>
 </body>
 </html>
