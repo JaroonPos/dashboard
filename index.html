@@ -69,19 +69,8 @@
 
   async function fetchDataAndRender() {
     const { data: salesData, error } = await supabase
-      .from('sales')
-      .select(`
-        id,
-        orders,
-        sales,
-        units,
-        userDash (
-          id,
-          userName,
-          img
-        )
-      `);
-
+      .from("sales")
+      .select("id, name, orders, sales, units, userDash(id, userName, img)");
 
     if (error) {
       console.error('Error fetching data:', error.message);
@@ -133,22 +122,25 @@
   }
 
   function populateTable(salesData) {
-    const tableBody = document.getElementById('salesTable');
-    tableBody.innerHTML = '';
-    salesData.forEach(s => {
-      const row = `
-        <tr>
-          <td class="border p-2 flex items-center gap-2">
-            <a href="add-sale.html?user_id=${s.userDash.id}"><img src="${s.userDash.img}" class="w-6 h-6 rounded-full"> ${s.userDash.userName}</a>
-          </td>
-          <td class="border p-2 text-right">${s.orders}</td>
-          <td class="border p-2 text-right">฿${s.sales.toLocaleString()}</td>
-          <td class="border p-2 text-right">${s.units}</td>
-          <td class="border p-2 text-right">฿${(s.orders > 0 ? (s.sales / s.orders).toFixed(0) : 0)}</td>
-        </tr>`;
-      tableBody.insertAdjacentHTML('beforeend', row);
-    });
-  }
+  const tableBody = document.getElementById('salesTable');
+  tableBody.innerHTML = '';
+  salesData.forEach(s => {
+    const row = `
+      <tr>
+        <td class="border p-2 flex items-center gap-2">
+          <a href="add-sale.html?user_id=${s.userDash.id}">
+            <img src="${s.userDash.img}" class="w-6 h-6 rounded-full"> ${s.userDash.userName}
+          </a>
+        </td>
+        <td class="border p-2 text-right">${s.orders}</td>
+        <td class="border p-2 text-right">฿${s.sales.toLocaleString()}</td>
+        <td class="border p-2 text-right">${s.units}</td>
+        <td class="border p-2 text-right">฿${(s.orders > 0 ? (s.sales / s.orders).toFixed(0) : 0)}</td>
+      </tr>`;
+    tableBody.insertAdjacentHTML('beforeend', row);
+  });
+}
+
 
   function drawChart(salesData) {
     const ctx = document.getElementById('salesChart').getContext('2d');
