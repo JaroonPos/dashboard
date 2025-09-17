@@ -57,11 +57,12 @@
 
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   let salesChartInstance = null;
-  let currentFilter = 'day';
+  let currentFilter = 'day'; // ✅ เพิ่มตัวแปรเพื่อเก็บค่า filter ปัจจุบัน
 
   const cardColors = ['bg-blue-200', 'bg-green-200', 'bg-yellow-200', 'bg-purple-200', 'bg-pink-200', 'bg-indigo-200', 'bg-red-200', 'bg-teal-200', 'bg-orange-200'];
   const chartColors = ['#60A5FA', '#34D399', '#FBBF24', '#A78BFA', '#F472B6', '#6366F1', '#EF4444', '#14B8A6', '#F97316'];
 
+  // ✅ สร้างฟังก์ชันสำหรับคำนวณช่วงเวลา
   function getTimeRange() {
     const now = new Date();
     let startDate = new Date();
@@ -71,13 +72,13 @@
         startDate.setHours(0, 0, 0, 0);
         endDate.setHours(23, 59, 59, 999);
     } else if (currentFilter === 'week') {
-        startDate.setDate(now.getDate() - now.getDay());
-        endDate.setDate(startDate.getDate() + 6);
+        startDate.setDate(now.getDate() - now.getDay()); // Start of the week (Sunday)
+        endDate.setDate(startDate.getDate() + 6); // End of the week (Saturday)
         startDate.setHours(0, 0, 0, 0);
         endDate.setHours(23, 59, 59, 999);
     } else if (currentFilter === 'month') {
-        startDate.setDate(1);
-        endDate.setMonth(now.getMonth() + 1, 0);
+        startDate.setDate(1); // Start of the month
+        endDate.setMonth(now.getMonth() + 1, 0); // End of the month
         startDate.setHours(0, 0, 0, 0);
         endDate.setHours(23, 59, 59, 999);
     }
@@ -88,7 +89,7 @@
   }
 
   async function fetchDataAndRender() {
-    const { startDate, endDate } = getTimeRange();
+    const { startDate, endDate } = getTimeRange(); // ✅ เรียกใช้ฟังก์ชันเพื่อรับช่วงเวลา
     const { data: salesData, error } = await supabase
       .from('sales')
       .select(`
@@ -102,8 +103,8 @@
           img
         )
       `)
-      .gte('created_at', startDate)
-      .lte('created_at', endDate);
+      .gte('created_at', startDate) // ✅ กรองข้อมูลจากวันที่เริ่มต้น
+      .lte('created_at', endDate); // ✅ กรองข้อมูลถึงวันที่สิ้นสุด
 
     if (error) {
       console.error('Error fetching data:', error.message);
@@ -156,15 +157,11 @@
     salesData.forEach((s, index) => {
       const cardColor = cardColors[index % cardColors.length];
       const medalIcon = getMedalIcon(index);
-
-      // ✅ สร้าง URL สำหรับการลิงก์
-      const linkURL = `user-sales-list.html?userName=${encodeURIComponent(s.name)}&timeRange=${currentFilter}`;
-
       const card = `
-        <a href="${linkURL}" class="${cardColor} p-2 rounded-xl shadow flex items-center justify-between no-underline text-current">
+        <div class="${cardColor} p-2 rounded-xl shadow flex items-center justify-between">
           <div class="flex items-center space-x-2">
             <img src="${s.img}" class="w-8 h-8 rounded-full border-2 border-white shadow-md">
-            <span class="font-semibold text-xs">${s.name}</span>
+            <a href="add-sale.html?user_id=${s.name}" class="font-semibold text-xs">${s.name}</a>
           </div>
           <div class="flex items-center space-x-2">
             ${medalIcon}
@@ -173,7 +170,7 @@
               <span class="text-base font-semibold text-green-700">฿${s.sales.toLocaleString()}</span>
             </div>
           </div>
-        </a>
+        </div>
       `;
       cardsContainer.insertAdjacentHTML('beforeend', card);
     });
@@ -238,6 +235,31 @@
       salesChartInstance.update();
     }
   }
+
+  // ✅ เพิ่ม Listener สำหรับปุ่ม filter
+  document.getElementById('filterDay').addEventListener('click', () => {
+    currentFilter = 'day';
+    document.getElementById('filterDay').className = 'px-4 py-2 text-sm font-medium rounded-lg text-white bg-blue-500 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors';
+    document.getElementById('filterWeek').className = 'px-4 py-2 text-sm font-medium rounded-lg text-gray-700 bg-gray-200 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors';
+    document.getElementById('filterMonth').className = 'px-4 py-2 text-sm font-medium rounded-lg text-gray-700 bg-gray-200 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors';
+    fetchDataAndRender();
+  });
+
+  document.getElementById('filterWeek').addEventListener('click', () => {
+    currentFilter = 'week';
+    document.getElementById('filterDay').className = 'px-4 py-2 text-sm font-medium rounded-lg text-gray-700 bg-gray-200 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors';
+    document.getElementById('filterWeek').className = 'px-4 py-2 text-sm font-medium rounded-lg text-white bg-blue-500 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors';
+    document.getElementById('filterMonth').className = 'px-4 py-2 text-sm font-medium rounded-lg text-gray-700 bg-gray-200 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors';
+    fetchDataAndRender();
+  });
+
+  document.getElementById('filterMonth').addEventListener('click', () => {
+    currentFilter = 'month';
+    document.getElementById('filterDay').className = 'px-4 py-2 text-sm font-medium rounded-lg text-gray-700 bg-gray-200 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors';
+    document.getElementById('filterWeek').className = 'px-4 py-2 text-sm font-medium rounded-lg text-gray-700 bg-gray-200 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors';
+    document.getElementById('filterMonth').className = 'px-4 py-2 text-sm font-medium rounded-lg text-white bg-blue-500 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors';
+    fetchDataAndRender();
+  });
 
   document.addEventListener('DOMContentLoaded', fetchDataAndRender);
   setInterval(fetchDataAndRender, 60000);
