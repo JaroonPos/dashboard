@@ -157,11 +157,15 @@
     salesData.forEach((s, index) => {
       const cardColor = cardColors[index % cardColors.length];
       const medalIcon = getMedalIcon(index);
+
+      // ✅ สร้าง URL สำหรับการลิงก์
+      const linkURL = `user-sales-list.html?userName=${encodeURIComponent(s.name)}&timeRange=${currentFilter}`;
+
       const card = `
-        <div class="${cardColor} p-2 rounded-xl shadow flex items-center justify-between">
+        <a href="${linkURL}" class="${cardColor} p-2 rounded-xl shadow flex items-center justify-between no-underline text-current">
           <div class="flex items-center space-x-2">
             <img src="${s.img}" class="w-8 h-8 rounded-full border-2 border-white shadow-md">
-            <a href="add-sale.html?user_id=${s.name}" class="font-semibold text-xs">${s.name}</a>
+            <span class="font-semibold text-xs">${s.name}</span>
           </div>
           <div class="flex items-center space-x-2">
             ${medalIcon}
@@ -170,7 +174,7 @@
               <span class="text-base font-semibold text-green-700">฿${s.sales.toLocaleString()}</span>
             </div>
           </div>
-        </div>
+        </a>
       `;
       cardsContainer.insertAdjacentHTML('beforeend', card);
     });
