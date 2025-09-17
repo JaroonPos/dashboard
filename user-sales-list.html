@@ -98,12 +98,11 @@
     const userId = userData.id;
 
     const { data: salesData, error } = await supabase
-      .from('sales')
-      .select('created_at, name, sales, units')
-      .eq('user_id', userId) // ✅ กรองข้อมูลด้วย user_id
-      .gte('created_at', startDate)
-      .lte('created_at', endDate)
-      .order('created_at', { ascending: false });
+    .from('sales')
+    .select('created_at, name, sales, units')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+
 
     if (error) {
       console.error('Error fetching sales data:', error.message);
