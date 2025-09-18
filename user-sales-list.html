@@ -33,6 +33,9 @@
             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sales (฿)</th>
             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Units</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Action
+            </th>
           </tr>
         </thead>
         <tbody id="salesTableBody" class="bg-white divide-y divide-gray-200">
@@ -118,10 +121,12 @@
   function renderSalesTable(salesData) {
     const tableBody = document.getElementById('salesTableBody');
     tableBody.innerHTML = '';
+
     if (salesData.length === 0) {
-      tableBody.innerHTML = '<tr><td colspan="4" class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">No sales data found for this period.</td></tr>';
+      tableBody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">No sales data found for this period.</td></tr>';
       return;
     }
+
     salesData.forEach(sale => {
       const row = `
         <tr class="hover:bg-gray-100">
@@ -129,11 +134,19 @@
           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${sale.name || '-'}</td>
           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">฿${sale.sales.toLocaleString()}</td>
           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${sale.units}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+            ${window.userRole === 'admin' ? `
+              <button onclick="deleteSale(${sale.id})" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
+                Delete
+              </button>
+            ` : ''}
+          </td>
         </tr>
       `;
       tableBody.insertAdjacentHTML('beforeend', row);
     });
   }
+
 
   function updateUI() {
     document.getElementById('userNameHeader').innerText = `${currentUserName}'s Sales List`;
@@ -148,6 +161,32 @@
       }
     });
   }
+
+  async function deleteSale(id) {
+    const password = prompt("Enter admin password to confirm delete:");
+    if (!password) return;
+
+    // ✅ ตัวอย่างตรวจรหัสง่ายๆ
+    if (password !== "admin1234") { 
+      alert("❌ Wrong password");
+      return;
+    }
+
+    const { error } = await supabase
+      .from('sales')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error(error);
+      alert("Error deleting sale");
+    } else {
+      alert("✅ Sale deleted");
+      fetchSalesData(); // reload
+    }
+  }
+
+
 
   // Add event listeners for filter buttons
   document.getElementById('filterDay').addEventListener('click', () => {
