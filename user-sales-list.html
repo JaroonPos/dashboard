@@ -49,7 +49,8 @@
 
 <!-- Modal -->
 <div id="deleteModal" 
-     class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300">
+     class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity duration-300" 
+     style="display: none;">
   <div class="bg-white p-6 rounded-xl shadow-2xl border border-gray-200 min-w-[300px] transform transition-transform duration-300 scale-95">
     <div class="text-center mb-4">
       <h3 class="text-xl font-semibold text-gray-800">ยืนยันการลบข้อมูล</h3>
@@ -192,43 +193,14 @@
 
   let deleteId = null;
 
-  // ฟังก์ชันเปิด Modal
-  function showDeleteModal(id) {
-      deleteId = id;
-      const modal = document.getElementById('deleteModal');
-      const modalContent = modal.querySelector('div:nth-child(1)'); // เลือก div ที่เป็น content ของ modal
-
-      // ✅ ขั้นตอนที่ 1: ทำให้ Modal แสดงผลแต่ยังโปร่งใสอยู่ (ใช้ flex)
-      modal.classList.remove('hidden');
-      modal.classList.add('flex');
-
-      // ✅ ขั้นตอนที่ 2: รอให้ browser render display:flex ก่อน แล้วค่อยเปลี่ยน opacity และ scale
-      // ใช้ setTimeout เล็กน้อยเพื่อให้แอนิเมชันทำงาน
-      setTimeout(() => {
-          modal.classList.remove('opacity-0');
-          modalContent.classList.remove('scale-95');
-          modal.classList.add('opacity-100');
-          modalContent.classList.add('scale-100');
-      }, 10);
+  function openDeleteModal(id) {
+    deleteId = id;
+    document.getElementById("deleteModal").style.display = "flex"; // 👉 เปิด modal
   }
 
-  // ฟังก์ชันปิด Modal
   function closeDeleteModal() {
-      const modal = document.getElementById('deleteModal');
-      const modalContent = modal.querySelector('div:nth-child(1)');
-
-      // ✅ ขั้นตอนที่ 1: เริ่มแอนิเมชัน fade-out และ shrink
-      modal.classList.remove('opacity-100');
-      modalContent.classList.remove('scale-100');
-      modal.classList.add('opacity-0');
-      modalContent.classList.add('scale-95');
-      
-      // ✅ ขั้นตอนที่ 2: รอให้แอนิเมชันเสร็จก่อน (300ms) แล้วค่อยซ่อน Modal
-      // เพื่อไม่ให้ Modal ถูกคลิกได้ในขณะที่กำลัง fade-out
-      setTimeout(() => {
-          modal.classList.remove('flex');
-          modal.classList.add('hidden');
-      }, 300);
+    document.getElementById("deleteModal").style.display = "none"; // 👉 ปิด modal
+    document.getElementById("adminPassword").value = "";
   }
 
   async function confirmDelete() {
