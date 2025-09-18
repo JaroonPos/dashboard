@@ -16,12 +16,8 @@
         </svg>
         <span>Back to Dashboard</span>
     </a>
-    
-    <div class="flex flex-col items-center justify-center text-center mb-6">
-      <img id="userImage" src="https://via.placeholder.com/100" class="w-20 h-20 rounded-full mb-2 border-2 border-blue-400 shadow-md">
-      <h1 class="text-3xl font-bold" id="userNameHeader">Sales List</h1>
-      <p class="text-gray-500" id="timeRangeInfo"></p>
-    </div>
+    <h1 class="text-3xl font-bold text-center mb-2" id="userNameHeader">Sales List</h1>
+    <p class="text-center text-gray-500 mb-6" id="timeRangeInfo"></p>
 
     <div class="flex justify-center space-x-2 mb-6">
         <button id="filterDay" class="px-4 py-2 text-sm font-medium rounded-lg text-white bg-blue-500 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">Day</button>
@@ -37,7 +33,9 @@
             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sales (฿)</th>
             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Units</th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Action
+            </th>
           </tr>
         </thead>
         <tbody id="salesTableBody" class="bg-white divide-y divide-gray-200">
@@ -51,12 +49,12 @@
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9jbXNraHJ5cHhlbGpnbmN5ZmZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc5MDcyMzIsImV4cCI6MjA3MzQ4MzIzMn0.clWbGRV1MrUHnWPyTEc66fnjbD8mLqo6fF1V6qiOJa4';
 
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  let currentUserId; // ✅ แก้ไขจาก userName เป็น userId
+  let currentUserName;
   let currentTimeRange;
 
   function getUrlParams() {
     const urlParams = new URLSearchParams(window.location.search);
-    currentUserId = urlParams.get('userId'); // ✅ รับค่า userId จาก URL
+    currentUserName = urlParams.get('userName') || 'Selected User';
     currentTimeRange = urlParams.get('timeRange') || 'day';
   }
 
@@ -86,36 +84,31 @@
   }
 
   async function fetchSalesData() {
-    if (!currentUserId) {
-        console.error("User ID is missing.");
-        return;
-    }
-    
     const { startDate, endDate } = getTimeRange(currentTimeRange);
     
-    // ✅ ดึงชื่อผู้ใช้และรูปภาพ
+    // ✅ ดึง user_id จาก userDash ที่ตรงกับ userName ที่รับมา
     const { data: userData, error: userError } = await supabase
       .from('userDash')
-      .select('userName, img')
-      .eq('id', currentUserId)
+      .select('id')
+      .eq('userName', currentUserName)
       .single();
 
     if (userError) {
-      console.error('Error fetching user data:', userError.message);
-      document.getElementById('userNameHeader').innerText = 'Sales List';
-      document.getElementById('userImage').src = 'https://via.placeholder.com/100';
-    } else {
-      document.getElementById('userNameHeader').innerText = `${userData.userName}'s Sales List`;
-      document.getElementById('userImage').src = userData.img || 'https://via.placeholder.com/100';
+      console.error('Error fetching user ID:', userError.message);
+      return;
     }
+
+    const userId = userData.id;
 
     const { data: salesData, error } = await supabase
       .from('sales')
-      .select('id, created_at, product_name, sales, units')
-      .eq('user_id', currentUserId)
-      .gte('created_at', startDate)
-      .lte('created_at', endDate)
+      .select('created_at, name, sales, units')
+      .eq('user_id', userId)
+      .gte('created_at::date', startDate)  // ใช้แค่ YYYY-MM-DD
+      .lte('created_at::date', endDate)
       .order('created_at', { ascending: false });
+
+
 
     if (error) {
       console.error('Error fetching sales data:', error.message);
@@ -128,17 +121,17 @@
   function renderSalesTable(salesData) {
     const tableBody = document.getElementById('salesTableBody');
     tableBody.innerHTML = '';
-    
+
     if (salesData.length === 0) {
       tableBody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">No sales data found for this period.</td></tr>';
       return;
     }
-    
+
     salesData.forEach(sale => {
       const row = `
         <tr class="hover:bg-gray-100">
           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${new Date(sale.created_at).toLocaleDateString()}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${sale.product_name || '-'}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${sale.name || '-'}</td>
           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">฿${sale.sales.toLocaleString()}</td>
           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${sale.units}</td>
           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -152,9 +145,12 @@
     });
   }
 
+
   function updateUI() {
+    document.getElementById('userNameHeader').innerText = `${currentUserName}'s Sales List`;
     document.getElementById('timeRangeInfo').innerText = `Displaying data for ${currentTimeRange}`;
     
+    // Highlight the active button
     document.querySelectorAll('button').forEach(btn => {
       if (btn.id === `filter${currentTimeRange.charAt(0).toUpperCase() + currentTimeRange.slice(1)}`) {
         btn.className = 'px-4 py-2 text-sm font-medium rounded-lg text-white bg-blue-500 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors';
@@ -168,6 +164,7 @@
     const password = prompt("Enter admin password to confirm delete:");
     if (!password) return;
 
+    // ✅ ตัวอย่างตรวจรหัสง่ายๆ
     if (password !== "admin1234") { 
       alert("❌ Wrong password");
       return;
@@ -183,16 +180,13 @@
       alert("Error deleting sale");
     } else {
       alert("✅ Sale deleted");
-      fetchSalesData();
+      fetchSalesData(); // reload
     }
   }
 
-  document.addEventListener('DOMContentLoaded', () => {
-    getUrlParams();
-    updateUI();
-    fetchSalesData();
-  });
 
+
+  // Add event listeners for filter buttons
   document.getElementById('filterDay').addEventListener('click', () => {
     currentTimeRange = 'day';
     fetchSalesData();
@@ -209,6 +203,13 @@
     currentTimeRange = 'month';
     fetchSalesData();
     updateUI();
+  });
+
+  // Initial load
+  document.addEventListener('DOMContentLoaded', () => {
+    getUrlParams();
+    updateUI();
+    fetchSalesData();
   });
 </script>
 
