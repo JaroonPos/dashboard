@@ -135,11 +135,9 @@
           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">฿${sale.sales.toLocaleString()}</td>
           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${sale.units}</td>
           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-            ${window.userRole === 'admin' ? `
-              <button onclick="deleteSale(${sale.id})" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
-                Delete
-              </button>
-            ` : ''}
+            <button onclick="deleteSale(${sale.id})" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
+              Delete
+            </button>
           </td>
         </tr>
       `;
