@@ -47,6 +47,22 @@
     </div>
   </div>
 
+<!-- Modal -->
+<div id="deleteModal" 
+     style="display:none; position:fixed; top:0; left:0; 
+            width:100%; height:100%; background:rgba(0,0,0,0.5); 
+            align-items:center; justify-content:center;">
+  <div style="background:white; padding:20px; border-radius:10px; min-width:300px;">
+    <h3>Confirm Delete</h3>
+    <p>Enter admin password:</p>
+    <input type="password" id="adminPassword" placeholder="Password" 
+           style="width:100%; padding:8px; margin-bottom:10px;">
+    <br>
+    <button onclick="confirmDelete()">✅ Confirm</button>
+    <button onclick="closeDeleteModal()">❌ Cancel</button>
+  </div>
+</div>
+
 <script>
   const SUPABASE_URL = 'https://ocmskhrypxeljgncyffp.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9jbXNraHJ5cHhlbGpnbmN5ZmZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc5MDcyMzIsImV4cCI6MjA3MzQ4MzIzMn0.clWbGRV1MrUHnWPyTEc66fnjbD8mLqo6fF1V6qiOJa4';
@@ -139,7 +155,7 @@
           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">฿${sale.sales.toLocaleString()}</td>
           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${sale.units}</td>
           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-            <button onclick="deleteSale(${sale.id})" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
+            <button onclick="openDeleteModal(${sale.id})" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
               Delete
             </button>
           </td>
@@ -165,20 +181,30 @@
     });
   }
 
-  async function deleteSale(id) {
-    const password = prompt("Enter admin password to confirm delete:");
-    if (!password) return;
+  let deleteId = null;
 
-    // ✅ ตัวอย่างตรวจรหัสง่ายๆ
-    if (password !== "admin1234") { 
+  function openDeleteModal(id) {
+    deleteId = id;
+    document.getElementById("deleteModal").style.display = "flex"; // 👉 เปิด modal
+  }
+
+  function closeDeleteModal() {
+    document.getElementById("deleteModal").style.display = "none"; // 👉 ปิด modal
+    document.getElementById("adminPassword").value = "";
+  }
+
+  async function confirmDelete() {
+    const password = document.getElementById("adminPassword").value;
+
+    if (password !== "admin1234") {
       alert("❌ Wrong password");
       return;
     }
 
     const { error } = await supabase
-      .from('sales')
+      .from("sales")
       .delete()
-      .eq('id', id);
+      .eq("id", deleteId);
 
     if (error) {
       console.error(error);
@@ -187,7 +213,10 @@
       alert("✅ Sale deleted");
       fetchSalesData(); // reload
     }
+
+    closeDeleteModal();
   }
+
 
 
 
