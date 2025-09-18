@@ -98,10 +98,13 @@
     const userId = userData.id;
 
     const { data: salesData, error } = await supabase
-    .from('sales')
-    .select('created_at, name, sales, units')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false });
+      .from('sales')
+      .select('created_at, name, sales, units')
+      .eq('user_id', userId)
+      .gte('created_at::date', startDate)  // ใช้แค่ YYYY-MM-DD
+      .lte('created_at::date', endDate)
+      .order('created_at', { ascending: false });
+
 
 
     if (error) {
