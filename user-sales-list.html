@@ -49,17 +49,27 @@
 
 <!-- Modal -->
 <div id="deleteModal" 
-     style="display:none; position:fixed; top:0; left:0; 
-            width:100%; height:100%; background:rgba(0,0,0,0.5); 
-            align-items:center; justify-content:center;">
-  <div style="background:white; padding:20px; border-radius:10px; min-width:300px;">
-    <h3>Confirm Delete</h3>
-    <p>Enter admin password:</p>
-    <input type="password" id="adminPassword" placeholder="Password" 
-           style="width:100%; padding:8px; margin-bottom:10px;">
-    <br>
-    <button onclick="confirmDelete()">✅ Confirm</button>
-    <button onclick="closeDeleteModal()">❌ Cancel</button>
+     class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity duration-300" 
+     style="display: none;">
+  <div class="bg-white p-6 rounded-xl shadow-2xl border border-gray-200 min-w-[300px] transform transition-transform duration-300 scale-95">
+    <div class="text-center mb-4">
+      <h3 class="text-xl font-semibold text-gray-800">ยืนยันการลบข้อมูล</h3>
+      <p class="text-sm text-gray-500 mt-1">กรุณากรอกรหัสผู้ดูแลระบบเพื่อยืนยัน</p>
+    </div>
+    
+    <input type="password" id="adminPassword" placeholder="รหัสผ่าน" 
+           class="w-full px-4 py-2 mb-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+    
+    <div class="flex justify-center space-x-4">
+      <button onclick="confirmDelete()" 
+              class="flex-1 px-4 py-2 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors">
+        <span class="mr-1">✅</span> ยืนยัน
+      </button>
+      <button onclick="closeDeleteModal()" 
+              class="flex-1 px-4 py-2 bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-colors">
+        <span class="mr-1">❌</span> ยกเลิก
+      </button>
+    </div>
   </div>
 </div>
 
