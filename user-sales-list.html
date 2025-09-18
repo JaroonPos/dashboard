@@ -16,6 +16,7 @@
         </svg>
         <span>Back to Dashboard</span>
     </a>
+    <img id="userImage" src="https://via.placeholder.com/100" class="w-20 h-20 rounded-full mb-2 border-2 border-blue-400 shadow-md">
     <h1 class="text-3xl font-bold text-center mb-2" id="userNameHeader">Sales List</h1>
     <p class="text-center text-gray-500 mb-6" id="timeRangeInfo"></p>
 
@@ -89,7 +90,7 @@
     // ✅ ดึง user_id จาก userDash ที่ตรงกับ userName ที่รับมา
     const { data: userData, error: userError } = await supabase
       .from('userDash')
-      .select('id')
+      .select('id, img')
       .eq('userName', currentUserName)
       .single();
 
@@ -97,6 +98,7 @@
       console.error('Error fetching user ID:', userError.message);
       return;
     }
+    document.getElementById('userImage').src = userData.img || 'https://via.placeholder.com/100';
 
     const userId = userData.id;
 
@@ -147,6 +149,7 @@
 
 
   function updateUI() {
+    
     document.getElementById('userNameHeader').innerText = `${currentUserName}'s Sales List`;
     document.getElementById('timeRangeInfo').innerText = `Displaying data for ${currentTimeRange}`;
     
