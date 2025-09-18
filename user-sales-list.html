@@ -106,7 +106,7 @@
 
     const { data: salesData, error } = await supabase
       .from('sales')
-      .select('created_at, name, sales, units')
+      .select('id, created_at, name, sales, units')
       .eq('user_id', userId)
       .gte('created_at::date', startDate)  // ใช้แค่ YYYY-MM-DD
       .lte('created_at::date', endDate)
