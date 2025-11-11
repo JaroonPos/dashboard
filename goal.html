@@ -2,8 +2,8 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ตั้งค่าเป้าหมาย (Goal Settings)</title>
+  <meta name="viewport" content="width=device-width, initial-scale-1.0">
+  <title>ตั้งเป้ายอดขาย (Sales Goal)</title>
   
   <script src="https://cdn.tailwindcss.com"></script>
   
@@ -13,19 +13,19 @@
 
   <div class="max-w-xl w-full bg-white p-6 md:p-8 rounded-2xl shadow-lg border border-gray-200">
     <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">
-      🎯 ตั้งค่าเป้าหมายใหม่
+      🎯 ตั้งเป้ายอดขาย
     </h1>
 
     <form id="goalForm" class="space-y-6">
 
       <div>
-        <label for="userSelect" classD="block text-sm font-medium text-gray-700 mb-2">
+        <label for="userSelect" class="block text-sm font-medium text-gray-700 mb-2">
           ผู้ขาย (Salesperson)
         </label>
         <select id="userSelect" name="user_id" required
           class="w-full p-3 bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150">
           <option value="" disabled selected>กำลังโหลดรายชื่อผู้ขาย...</option>
-          </select>
+        </select>
       </div>
 
       <div>
@@ -74,31 +74,15 @@
             <option value="11">พฤศจิกายน</option>
             <option value="12">ธันวาคม</option>
           </select>
-          <p class="text-xs text-gray-500 mt-2">
-            *เป้าหมายรายเดือนนี้จะถูกใช้สำหรับเดือนที่เลือก (ไม่ระบุปี) ตามโครงสร้าง DB
-          </p>
         </div>
       </div>
 
       <div>
-        <h3 class="text-sm font-medium text-gray-700 mb-2">กำหนดเป้าหมาย (Targets)</h3>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label for="targetSales" class="block text-xs text-gray-600 mb-1">ยอดขาย (฿)</label>
-            <input type="number" id="targetSales" name="target_sales" placeholder="0" required
-              class="w-full p-3 bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150">
-          </div>
-          <div>
-            <label for="targetOrders" class="block text-xs text-gray-600 mb-1">จำนวนออเดอร์</slabel>
-            <input type="number" id="targetOrders" name="target_orders" placeholder="0" required
-              class="w-full p-3 bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150">
-          </div>
-          <div>
-            <label for="targetUnits" class="block text-xs text-gray-600 mb-1">จำนวนชิ้น</label>
-            <input type="number" id="targetUnits" name="target_units" placeholder="0" required
-              class="w-full p-3 bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150">
-          </div>
-        </div>
+        <label for="targetSales" class="block text-sm font-medium text-gray-700 mb-2">
+          เป้ายอดขาย (฿)
+        </label>
+        <input type="number" id="targetSales" name="target_sales" placeholder="0" required
+          class="w-full p-3 bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150">
       </div>
 
       <button type="submit" id="saveGoalBtn"
@@ -116,7 +100,6 @@
 
   <script>
     // --- 1. การตั้งค่า SUPABASE ---
-    // ⚠️ (สำคัญ) กรุณาใส่ URL และ KEY ของคุณ
     const SUPABASE_URL = 'https://ocmskhrypxeljgncyffp.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9jbXNraHJ5cHhlbGpnbmN5ZmZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc5MDcyMzIsImV4cCI6MjA3MzQ4MzIzMn0.clWbGRV1MrUHnWPyTEc66fnjbD8mLqo6fF1V6qiOJa4';
 
@@ -165,38 +148,37 @@
       if (selectedValue === 'daily') {
         dailyArea.classList.remove('hidden');
         monthlyArea.classList.add('hidden');
-        goalDate.setAttribute('required', 'true'); // ตั้งค่า 'date' เป็น required
-        goalMonth.removeAttribute('required');      // ลบ 'month' ออกจาก required
+        goalDate.setAttribute('required', 'true');
+        goalMonth.removeAttribute('required');
       } else {
         dailyArea.classList.add('hidden');
         monthlyArea.classList.remove('hidden');
-        goalDate.removeAttribute('required');       // ลบ 'date' ออกจาก required
-        goalMonth.setAttribute('required', 'true'); // ตั้งค่า 'month' เป็น required
+        goalDate.removeAttribute('required');
+        goalMonth.setAttribute('required', 'true');
       }
     }
 
     // --- 5. ฟังก์ชันจัดการการบันทึกฟอร์ม (Submit) ---
     async function handleFormSubmit(event) {
-      event.preventDefault(); // ป้องกันหน้าโหลดใหม่
+      event.preventDefault(); 
       saveGoalBtn.disabled = true;
       saveGoalBtn.textContent = 'กำลังบันทึก...';
       formMessage.textContent = '';
 
-      // ดึงข้อมูลจากฟอร์ม
       const formData = new FormData(goalForm);
       const type = formData.get('goalType');
 
-      // สร้าง Object ที่จะส่งไป Supabase ให้ตรงกับ DB
+      // ✅ สร้าง Object ที่จะส่งไป Supabase (ตัด Orders และ Units ออกแล้ว)
       const goalObject = {
         user_id: formData.get('user_id'),
         type: type,
         target_sales: parseInt(formData.get('target_sales')) || 0,
-        target_orders: parseInt(formData.get('target_orders')) || 0,
-        target_units: parseInt(formData.get('target_units')) || 0,
         
-        // --- ส่วนสำคัญ: ส่ง date หรือ month ตาม type ---
+        // ส่ง date หรือ month ตาม type
         date: type === 'daily' ? formData.get('date') : null,
         month: type === 'monthly' ? parseInt(formData.get('month')) : null
+        
+        // ไม่มีการส่ง target_orders และ target_units
       };
 
       // ส่งข้อมูลไปที่ตาราง 'goals'
@@ -213,10 +195,9 @@
       } else {
         console.log('Goal saved successfully:', data);
         formMessage.innerHTML = '<span class="text-green-500">บันทึกเป้าหมายสำเร็จ!</span>';
-        goalForm.reset(); // ล้างฟอร์ม
-        toggleGoalArea(); // คืนค่าการแสดงผลฟอร์ม
+        goalForm.reset(); 
+        toggleGoalArea(); 
         
-        // หน่วงเวลาเล็กน้อยก่อนคืนค่าปุ่ม
         setTimeout(() => {
           formMessage.textContent = '';
           saveGoalBtn.disabled = false;
@@ -227,15 +208,13 @@
 
     // --- 6. การตั้งค่า Event Listeners ---
     document.addEventListener('DOMContentLoaded', () => {
-      loadUsers();        // โหลดรายชื่อผู้ขายเมื่อหน้าพร้อม
-      toggleGoalArea(); // ตั้งค่าการแสดงผลฟอร์มเริ่มต้น
+      loadUsers();        
+      toggleGoalArea(); 
 
-      // เมื่อมีการเปลี่ยน Daily/Monthly
       goalTypeRadios.forEach(radio => {
         radio.addEventListener('change', toggleGoalArea);
       });
 
-      // เมื่อกดปุ่ม Submit
       goalForm.addEventListener('submit', handleFormSubmit);
     });
   </script>
