@@ -94,6 +94,15 @@
       
       <div id="formMessage" class="text-center mt-4"></div>
 
+      <div id="goalDataDisplay" class="hidden bg-green-50 border border-green-300 text-green-800 p-4 rounded-lg mt-4 text-sm space-y-1">
+        <h4 class="font-bold text-base">✨ บันทึกข้อมูลเรียบร้อย:</h4>
+        <p><strong>ผู้ขาย:</strong> <span id="displayUser"></span></p>
+        <p><strong>ประเภท:</strong> <span id="displayType"></span></p>
+        <p><strong>เป้ายอดขาย:</strong> <span id="displaySales"></span></p>
+        <p><strong>วันที่/เดือน:</strong> <span id="displayPeriod"></span></p>
+        <p class="text-xs text-gray-500 mt-2">ID ที่บันทึก: <span id="displayID"></span></p>
+      </div>
+
     </form>
   </div>
 
@@ -105,105 +114,90 @@
 
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // --- 2. ตัวแปรอ้างอิง DOM ---
+    // ... (ส่วนโค้ดด้านบนเหมือนเดิม)
+
+    // --- 2. ตัวแปรอ้างอิง DOM (เพิ่มตัวใหม่) ---
     const goalForm = document.getElementById('goalForm');
-    const userSelect = document.getElementById('userSelect');
-    const goalTypeRadios = document.querySelectorAll('input[name="goalType"]');
-    const dailyArea = document.getElementById('dailyGoalArea');
-    const monthlyArea = document.getElementById('monthlyGoalArea');
-    const goalDate = document.getElementById('goalDate');
-    const goalMonth = document.getElementById('goalMonth');
-    const saveGoalBtn = document.getElementById('saveGoalBtn');
+    // ... (ตัวแปรอื่น ๆ)
     const formMessage = document.getElementById('formMessage');
 
-    // --- 3. ฟังก์ชันสำหรับโหลดผู้ขาย (userDash) ---
-    async function loadUsers() {
-      const { data, error } = await supabase
-        .from('userDash') // ⚠️ ตรวจสอบว่าชื่อตาราง user ถูกต้อง
-        .select('id, userName');
+    // ✅ เพิ่มตัวแปร DOM สำหรับส่วนแสดงผลใหม่
+    const goalDataDisplay = document.getElementById('goalDataDisplay');
+    const displayUser = document.getElementById('displayUser');
+    const displayType = document.getElementById('displayType');
+    const displaySales = document.getElementById('displaySales');
+    const displayPeriod = document.getElementById('displayPeriod');
+    const displayID = document.getElementById('displayID');
+    // ...
 
-      if (error) {
-        console.error('Error loading users:', error.message);
-        userSelect.innerHTML = '<option value="" disabled>ไม่สามารถโหลดผู้ขายได้</option>';
-        return;
-      }
-
-      if (data.length > 0) {
-        userSelect.innerHTML = '<option value="" disabled selected>กรุณาเลือกผู้ขาย...</option>';
-        data.forEach(user => {
-          const option = document.createElement('option');
-          option.value = user.id; // ส่ง user.id ไปยัง DB
-          option.textContent = user.userName;
-          userSelect.appendChild(option);
-        });
-      } else {
-        userSelect.innerHTML = '<option value="" disabled>ไม่พบข้อมูลผู้ขาย</option>';
-      }
-    }
-
-    // --- 4. ฟังก์ชันสลับฟอร์ม Daily/Monthly ---
-    function toggleGoalArea() {
-      const selectedValue = document.querySelector('input[name="goalType"]:checked').value;
-
-      if (selectedValue === 'daily') {
-        dailyArea.classList.remove('hidden');
-        monthlyArea.classList.add('hidden');
-        goalDate.setAttribute('required', 'true');
-        goalMonth.removeAttribute('required');
-      } else {
-        dailyArea.classList.add('hidden');
-        monthlyArea.classList.remove('hidden');
-        goalDate.removeAttribute('required');
-        goalMonth.setAttribute('required', 'true');
-      }
-    }
-
-    // --- 5. ฟังก์ชันจัดการการบันทึกฟอร์ม (Submit) ---
+    // --- 5. ฟังก์ชันจัดการการบันทึกฟอร์ม (Submit) (ปรับปรุงใหม่) ---
     async function handleFormSubmit(event) {
-      event.preventDefault(); 
-      saveGoalBtn.disabled = true;
-      saveGoalBtn.textContent = 'กำลังบันทึก...';
-      formMessage.textContent = '';
+    event.preventDefault(); 
+    
+    // ปิด/ซ่อนการแสดงผลลัพธ์เก่าก่อน
+    goalDataDisplay.classList.add('hidden'); 
+    formMessage.textContent = ''; 
+    
+    saveGoalBtn.disabled = true;
+    // เพิ่ม icon หมุนๆ
+    saveGoalBtn.innerHTML = '<svg class="animate-spin h-5 w-5 mr-3 -ml-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> <span>กำลังบันทึก...</span>';
 
-      const formData = new FormData(goalForm);
-      const type = formData.get('goalType');
 
-      // ✅ สร้าง Object ที่จะส่งไป Supabase (ตัด Orders และ Units ออกแล้ว)
-      const goalObject = {
+    const formData = new FormData(goalForm);
+    const type = formData.get('goalType');
+    const monthName = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+
+    const goalObject = {
         user_id: formData.get('user_id'),
         type: type,
         target_sales: parseInt(formData.get('target_sales')) || 0,
-        
-        // ส่ง date หรือ month ตาม type
         date: type === 'daily' ? formData.get('date') : null,
         month: type === 'monthly' ? parseInt(formData.get('month')) : null
-        
-        // ไม่มีการส่ง target_orders และ target_units
-      };
+    };
+    
+    // ✅ (สำหรับ Debug) แสดง Object ที่จะส่งไป Supabase ใน Console
+    console.log('Data to be inserted:', goalObject);
 
-      // ส่งข้อมูลไปที่ตาราง 'goals'
-      const { data, error } = await supabase
-        .from('goals') // ⚠️ ตรวจสอบว่าชื่อตาราง goals ถูกต้อง
+    // ✅ 1. ส่งข้อมูลไปที่ตาราง 'goals' และใช้ .select() 
+    //    เพื่อให้ Supabase ดึงข้อมูลที่เพิ่งบันทึกกลับมา (รวมถึง ID และชื่อ User)
+    const { data, error } = await supabase
+        .from('goals') 
         .insert([goalObject])
-        .select();
+        .select(`
+            *,
+            userDash(userName)  
+        `);
 
-      if (error) {
+    if (error) {
         console.error('Error saving goal:', error.message);
         formMessage.innerHTML = `<span class="text-red-500">เกิดข้อผิดพลาด: ${error.message}</span>`;
-        saveGoalBtn.disabled = false;
-        saveGoalBtn.innerHTML = '<span>✅</span> <span>บันทึกเป้าหมาย</span>';
-      } else {
-        console.log('Goal saved successfully:', data);
-        formMessage.innerHTML = '<span class="text-green-500">บันทึกเป้าหมายสำเร็จ!</span>';
-        goalForm.reset(); 
-        toggleGoalArea(); 
+    } else {
+        // ✅ 2. ข้อมูลที่บันทึกสำเร็จจะอยู่ใน data[0]
+        const savedData = data[0];
+        const targetUser = savedData.userDash?.userName || 'N/A';
         
-        setTimeout(() => {
-          formMessage.textContent = '';
-          saveGoalBtn.disabled = false;
-          saveGoalBtn.innerHTML = '<span>✅</span> <span>บันทึกเป้าหมาย</span>';
-        }, 3000);
-      }
+        // จัดรูปแบบการแสดงผล
+        const periodDisplay = savedData.type === 'daily' 
+                            ? savedData.date 
+                            : monthName[savedData.month - 1]; // แปลงเลขเดือนเป็นชื่อเดือน
+
+        formMessage.innerHTML = '<span class="text-green-500">✅ บันทึกเป้าหมายสำเร็จ!</span>';
+        
+        // ✅ 3. อัปเดตส่วนแสดงผลใหม่
+        displayUser.textContent = targetUser;
+        displayType.textContent = savedData.type === 'daily' ? 'รายวัน' : 'รายเดือน';
+        displaySales.textContent = '฿' + savedData.target_sales.toLocaleString();
+        displayPeriod.textContent = periodDisplay;
+        displayID.textContent = savedData.id;
+        goalDataDisplay.classList.remove('hidden'); // แสดงกล่องข้อมูล
+        
+        goalForm.reset(); // ล้างฟอร์ม
+        toggleGoalArea(); // คืนค่าการแสดงผลฟอร์ม
+    }
+    
+    // คืนค่าปุ่ม
+    saveGoalBtn.disabled = false;
+    saveGoalBtn.innerHTML = '<span>✅</span> <span>บันทึกเป้าหมาย</span>';
     }
 
     // --- 6. การตั้งค่า Event Listeners ---
