@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale-1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ตั้งเป้ายอดขาย (Sales Goal)</title>
   
   <script src="https://cdn.tailwindcss.com"></script>
@@ -108,149 +108,126 @@
 
 
   <script>
-    // --- 1. การตั้งค่า SUPABASE ---
-    const SUPABASE_URL = 'https://ocmskhrypxeljgncyffp.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9jbXNraHJ5cHhlbGpnbmN5ZmZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc5MDcyMzIsImV4cCI6MjA3MzQ4MzIzMn0.clWbGRV1MrUHnWPyTEc66fnjbD8mLqo6fF1V6qiOJa4';
+  // --- 1. การตั้งค่า SUPABASE ---
+  const SUPABASE_URL = 'https://ocmskhrypxeljgncyffp.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5c...<ตัดออกเพื่อความปลอดภัย>';
 
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // --- 2. ตัวแปรอ้างอิง DOM (เพิ่มตัวใหม่) ---
-    const goalForm = document.getElementById('goalForm');
-    // ... (ตัวแปรอื่น ๆ)
-    const formMessage = document.getElementById('formMessage');
+  // ✅ ตัวแปร DOM ที่จำเป็น
+  const goalForm = document.getElementById('goalForm');
+  const userSelect = document.getElementById('userSelect');
+  const goalTypeRadios = document.querySelectorAll('input[name="goalType"]');
+  const dailyArea = document.getElementById('goalDate').parentElement;
+  const monthlyArea = document.getElementById('monthlyGoalArea');
+  const saveGoalBtn = document.getElementById('saveGoalBtn');
 
-    // ✅ เพิ่มตัวแปร DOM สำหรับส่วนแสดงผลใหม่
-    const goalDataDisplay = document.getElementById('goalDataDisplay');
-    const displayUser = document.getElementById('displayUser');
-    const displayType = document.getElementById('displayType');
-    const displaySales = document.getElementById('displaySales');
-    const displayPeriod = document.getElementById('displayPeriod');
-    const displayID = document.getElementById('displayID');
+  const formMessage = document.getElementById('formMessage');
+  const goalDataDisplay = document.getElementById('goalDataDisplay');
+  const displayUser = document.getElementById('displayUser');
+  const displayType = document.getElementById('displayType');
+  const displaySales = document.getElementById('displaySales');
+  const displayPeriod = document.getElementById('displayPeriod');
+  const displayID = document.getElementById('displayID');
 
-    // --- 3. ฟังก์ชันสำหรับโหลดผู้ขาย (userDash) ---
-    async function loadUsers() {
-      const { data, error } = await supabase
-        .from('userDash') // ⚠️ ตรวจสอบว่าชื่อตาราง user ถูกต้อง
-        .select('id, userName');
-
-      if (error) {
-        console.error('Error loading users:', error.message);
-        userSelect.innerHTML = '<option value="" disabled>ไม่สามารถโหลดผู้ขายได้</option>';
-        return;
-      }
-
-      if (data.length > 0) {
-        userSelect.innerHTML = '<option value="" disabled selected>กรุณาเลือกผู้ขาย...</option>';
-        data.forEach(user => {
-          const option = document.createElement('option');
-          option.value = user.id; // ส่ง user.id ไปยัง DB
-          option.textContent = user.userName;
-          userSelect.appendChild(option);
-        });
-      } else {
-        userSelect.innerHTML = '<option value="" disabled>ไม่พบข้อมูลผู้ขาย</option>';
-      }
-    }
-
-    // --- 4. ฟังก์ชันสลับฟอร์ม Daily/Monthly ---
-    function toggleGoalArea() {
-      const selectedValue = document.querySelector('input[name="goalType"]:checked').value;
-
-      if (selectedValue === 'daily') {
-        dailyArea.classList.remove('hidden');
-        monthlyArea.classList.add('hidden');
-        goalDate.setAttribute('required', 'true');
-        goalMonth.removeAttribute('required');
-      } else {
-        dailyArea.classList.add('hidden');
-        monthlyArea.classList.remove('hidden');
-        goalDate.removeAttribute('required');
-        goalMonth.setAttribute('required', 'true');
-      }
-    }
-
-    // --- 5. ฟังก์ชันจัดการการบันทึกฟอร์ม (Submit) (ปรับปรุงใหม่) ---
-    async function handleFormSubmit(event) {
-    event.preventDefault(); 
-    
-    // ปิด/ซ่อนการแสดงผลลัพธ์เก่าก่อน
-    goalDataDisplay.classList.add('hidden'); 
-    formMessage.textContent = ''; 
-    
-    saveGoalBtn.disabled = true;
-    // เพิ่ม icon หมุนๆ
-    saveGoalBtn.innerHTML = '<svg class="animate-spin h-5 w-5 mr-3 -ml-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> <span>กำลังบันทึก...</span>';
-
-
-    const formData = new FormData(goalForm);
-    const type = formData.get('goalType');
-    const monthName = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
-
-    const goalObject = {
-        user_id: formData.get('user_id'),
-        type: type,
-        target_sales: parseInt(formData.get('target_sales')) || 0,
-        date: type === 'daily' ? formData.get('date') : null,
-        month: type === 'monthly' ? parseInt(formData.get('month')) : null
-    };
-    
-    // ✅ (สำหรับ Debug) แสดง Object ที่จะส่งไป Supabase ใน Console
-    console.log('Data to be inserted:', goalObject);
-
-    // ✅ 1. ส่งข้อมูลไปที่ตาราง 'goals' และใช้ .select() 
-    //    เพื่อให้ Supabase ดึงข้อมูลที่เพิ่งบันทึกกลับมา (รวมถึง ID และชื่อ User)
+  // --- 2. โหลดรายชื่อ user ---
+  async function loadUsers() {
     const { data, error } = await supabase
-        .from('goals') 
-        .insert([goalObject])
-        .select(`
-            *,
-            userDash(userName)  
-        `);
+      .from('userDash')
+      .select('id, userName')
+      .eq("statusUser", 1); // ✅ เลือกเฉพาะ active user
 
     if (error) {
-        console.error('Error saving goal:', error.message);
-        formMessage.innerHTML = `<span class="text-red-500">เกิดข้อผิดพลาด: ${error.message}</span>`;
-    } else {
-        // ✅ 2. ข้อมูลที่บันทึกสำเร็จจะอยู่ใน data[0]
-        const savedData = data[0];
-        const targetUser = savedData.userDash?.userName || 'N/A';
-        
-        // จัดรูปแบบการแสดงผล
-        const periodDisplay = savedData.type === 'daily' 
-                            ? savedData.date 
-                            : monthName[savedData.month - 1]; // แปลงเลขเดือนเป็นชื่อเดือน
-
-        formMessage.innerHTML = '<span class="text-green-500">✅ บันทึกเป้าหมายสำเร็จ!</span>';
-        
-        // ✅ 3. อัปเดตส่วนแสดงผลใหม่
-        displayUser.textContent = targetUser;
-        displayType.textContent = savedData.type === 'daily' ? 'รายวัน' : 'รายเดือน';
-        displaySales.textContent = '฿' + savedData.target_sales.toLocaleString();
-        displayPeriod.textContent = periodDisplay;
-        displayID.textContent = savedData.id;
-        goalDataDisplay.classList.remove('hidden'); // แสดงกล่องข้อมูล
-        
-        goalForm.reset(); // ล้างฟอร์ม
-        toggleGoalArea(); // คืนค่าการแสดงผลฟอร์ม
-    }
-    
-    // คืนค่าปุ่ม
-    saveGoalBtn.disabled = false;
-    saveGoalBtn.innerHTML = '<span>✅</span> <span>บันทึกเป้าหมาย</span>';
+      console.error('Error loading users:', error);
+      userSelect.innerHTML = '<option value="" disabled>โหลดไม่สำเร็จ</option>';
+      return;
     }
 
-    // --- 6. การตั้งค่า Event Listeners ---
-    document.addEventListener('DOMContentLoaded', () => {
-      loadUsers();        
-      toggleGoalArea(); 
+    userSelect.innerHTML = '<option value="" disabled selected>กรุณาเลือกผู้ขาย...</option>';
 
-      goalTypeRadios.forEach(radio => {
-        radio.addEventListener('change', toggleGoalArea);
-      });
-
-      goalForm.addEventListener('submit', handleFormSubmit);
+    data.forEach(user => {
+      const option = document.createElement('option');
+      option.value = user.id;
+      option.textContent = user.userName;
+      userSelect.appendChild(option);
     });
-  </script>
+  }
+
+  // --- 3. สลับระหว่างรายวัน/รายเดือน ---
+  function toggleGoalArea() {
+    const selected = document.querySelector('input[name="goalType"]:checked').value;
+
+    if (selected === 'daily') {
+      dailyArea.classList.remove('hidden');
+      monthlyArea.classList.add('hidden');
+    } else {
+      monthlyArea.classList.remove('hidden');
+      dailyArea.classList.add('hidden');
+    }
+  }
+
+  // --- 4. Submit form (Insert Goal) ---
+  async function handleFormSubmit(event) {
+    event.preventDefault();
+
+    saveGoalBtn.disabled = true;
+    saveGoalBtn.innerHTML = "⏳ บันทึก...";
+
+    const formData = new FormData(goalForm);
+    const type = formData.get("goalType");
+
+    const goalObject = {
+      user_id: formData.get("user_id"),
+      type,
+      target_sales: parseInt(formData.get("target_sales")),
+      date: type === "daily" ? formData.get("date") : null,
+      month: type === "monthly" ? parseInt(formData.get("month")) : null
+    };
+
+    console.log("Insert -> ", goalObject);
+
+    const { data, error } = await supabase
+      .from("goals")
+      .insert([goalObject])
+      .select(`
+        id,
+        target_sales,
+        type,
+        date,
+        month,
+        userDash ( userName )
+      `);
+
+    if (error) {
+      console.error("Insert error:", error);
+      formMessage.innerHTML = `<span class="text-red-500">❌ ${error.message}</span>`;
+    } else {
+      const result = data[0];
+
+      displayUser.textContent = result.userDash.userName;
+      displayType.textContent = (result.type === "daily") ? "รายวัน" : "รายเดือน";
+      displaySales.textContent = "฿" + result.target_sales.toLocaleString();
+      displayPeriod.textContent = (result.type === "daily") ? result.date : result.month;
+      displayID.textContent = result.id;
+
+      goalDataDisplay.classList.remove("hidden");
+      formMessage.innerHTML = `<span class="text-green-600">✅ บันทึกสำเร็จ!</span>`;
+      goalForm.reset();
+    }
+
+    saveGoalBtn.disabled = false;
+    saveGoalBtn.innerHTML = "✅ บันทึกเป้าหมาย";
+  }
+
+  // --- Event Listeners ---
+  document.addEventListener("DOMContentLoaded", () => {
+    loadUsers();
+    toggleGoalArea();
+    goalTypeRadios.forEach(radio => radio.addEventListener("change", toggleGoalArea));
+    goalForm.addEventListener("submit", handleFormSubmit);
+  });
+</script>
+
 
 </body>
 </html>
