@@ -255,6 +255,7 @@
       displayPeriod.textContent = type === 'daily' ? date : monthNames[month] || '-';
       displayID.textContent = data.map(d => d.id).join(', ');
       goalForm.reset();
+      toggleGoalArea();
     }
 
     saveGoalBtn.disabled = false;
