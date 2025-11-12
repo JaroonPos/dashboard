@@ -95,6 +95,16 @@
           class="w-full p-3 bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150">
       </div>
 
+      <div>
+        <label for="goalPassword" class="block text-sm font-medium text-gray-700 mb-2">
+          รหัสผ่าน (Password)
+        </label>
+        <input type="password" id="goalPassword" name="goalPassword" placeholder="ใส่รหัสผ่านก่อนบันทึก"
+          required
+          class="w-full p-3 bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+      </div>
+
+
       <button type="submit" id="saveGoalBtn"
         class="w-full bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 transition duration-150 mt-8 font-semibold flex items-center justify-center gap-2
                disabled:bg-gray-400">
@@ -119,10 +129,13 @@
 
   <script>
   // --- 1. การตั้งค่า SUPABASE ---
-    const SUPABASE_URL = 'https://ocmskhrypxeljgncyffp.supabase.co'; 
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9jbXNraHJ5cHhlbGpnbmN5ZmZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc5MDcyMzIsImV4cCI6MjA3MzQ4MzIzMn0.clWbGRV1MrUHnWPyTEc66fnjbD8mLqo6fF1V6qiOJa4';
+  const SUPABASE_URL = 'https://ocmskhrypxeljgncyffp.supabase.co'; 
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9jbXNraHJ5cHhlbGpnbmN5ZmZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc5MDcyMzIsImV4cCI6MjA3MzQ4MzIzMn0.clWbGRV1MrUHnWPyTEc66fnjbD8mLqo6fF1V6qiOJa4';
 
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // 🔒 กำหนดรหัสผ่านสำหรับบันทึกเป้าหมาย (คุณตั้งเองได้)
+  const GOAL_SAVE_PASSWORD = "P@ssw0rd@2025";
 
   // ✅ ตัวแปร DOM ที่จำเป็น
   const goalForm = document.getElementById('goalForm');
@@ -199,6 +212,12 @@
   // --- 4. Submit form (Insert Goal) ---
   async function handleFormSubmit(event) {
     event.preventDefault();
+
+    const passwordInput = document.getElementById("goalPassword").value.trim();
+    if (passwordInput !== GOAL_SAVE_PASSWORD) {
+      formMessage.innerHTML = `<span class="text-red-500 font-semibold">❌ รหัสผ่านไม่ถูกต้อง</span>`;
+      return;
+    }
 
     saveGoalBtn.disabled = true;
     saveGoalBtn.innerHTML = "⏳ กำลังบันทึก...";
