@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎯 รายการเป้าหมายการขาย</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body class="bg-gray-100 min-h-screen p-4 flex flex-col items-center">
+
+  <div class="max-w-5xl w-full bg-white p-6 rounded-2xl shadow-lg border border-gray-200">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+      <h1 class="text-2xl font-bold text-gray-800">🎯 รายการเป้าหมายการขาย</h1>
+      <a href="goal.html"
+         class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition">
+        ➕ เพิ่มเป้าหมายใหม่
+      </a>
+    </div>
+
+    <!-- Toggle Filter -->
+    <div class="flex justify-center gap-3 mb-6">
+      <button id="btnDaily"
+        class="toggle-btn bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold shadow">
+        รายวัน
+      </button>
+      <button id="btnMonthly"
+        class="toggle-btn bg-gray-100 text-gray-700 px-4 py-2 rounded-lg font-semibold border">
+        รายเดือน
+      </button>
+      <button id="btnRefresh"
+        class="bg-green-100 text-green-700 px-4 py-2 rounded-lg hover:bg-green-200 font-medium border border-green-300">
+        🔄 โหลดใหม่
+      </button>
+    </div>
+
+    <!-- ตารางข้อมูล -->
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm border-collapse border border-gray-200">
+        <thead class="bg-gray-50">
+          <tr class="text-gray-700 text-center">
+            <th class="border p-2">#</th>
+            <th class="border p-2">ชื่อผู้ขาย</th>
+            <th class="border p-2">ประเภท</th>
+            <th class="border p-2">วันที่/เดือน</th>
+            <th class="border p-2">เป้ายอดขาย (฿)</th>
+            <th class="border p-2">วันที่สร้าง</th>
+          </tr>
+        </thead>
+        <tbody id="goalTableBody" class="text-center">
+          <tr><td colspan="6" class="p-4 text-gray-400">กำลังโหลดข้อมูล...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    // Supabase setup
+    const SUPABASE_URL = 'https://ocmskhrypxeljgncyffp.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9jbXNraHJ5cHhlbGpnbmN5ZmZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc5MDcyMzIsImV4cCI6MjA3MzQ4MzIzMn0.clWbGRV1MrUHnWPyTEc66fnjbD8mLqo6fF1V6qiOJa4';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // DOM
+    const btnDaily = document.getElementById("btnDaily");
+    const btnMonthly = document.getElementById("btnMonthly");
+    const btnRefresh = document.getElementById("btnRefresh");
+    const goalTableBody = document.getElementById("goalTableBody");
+
+    let currentType = 'daily'; // ค่าเริ่มต้น
+
+    async function loadGoals() {
+      goalTableBody.innerHTML = `<tr><td colspan="6" class="p-4 text-gray-400">⏳ กำลังโหลดข้อมูล...</td></tr>`;
+
+      const { data, error } = await supabase
+        .from('goals')
+        .select(`
+          id,
+          type,
+          target_sales,
+          date,
+          month,
+          created_at,
+          userDash (userName)
+        `)
+        .eq('type', currentType)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching goals:', error.message);
+        goalTableBody.innerHTML = `<tr><td colspan="6" class="text-red-500 p-4">❌ โหลดข้อมูลไม่สำเร็จ: ${error.message}</td></tr>`;
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        goalTableBody.innerHTML = `<tr><td colspan="6" class="text-gray-500 p-4">ไม่พบข้อมูลเป้าหมาย</td></tr>`;
+        return;
+      }
+
+      const monthName = ["-", "ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+
+      goalTableBody.innerHTML = data.map((g, i) => `
+        <tr class="hover:bg-gray-50 transition">
+          <td class="border p-2">${i + 1}</td>
+          <td class="border p-2">${g.userDash?.userName || '-'}</td>
+          <td class="border p-2">${g.type === 'daily' ? 'รายวัน' : 'รายเดือน'}</td>
+          <td class="border p-2">${g.type === 'daily' ? g.date : monthName[g.month] || '-'}</td>
+          <td class="border p-2 text-right">฿${g.target_sales.toLocaleString()}</td>
+          <td class="border p-2 text-gray-500">${new Date(g.created_at).toLocaleDateString('th-TH')}</td>
+        </tr>
+      `).join('');
+    }
+
+    // Toggle Buttons
+    function toggleType(type) {
+      currentType = type;
+      if (type === 'daily') {
+        btnDaily.classList.replace('bg-gray-100', 'bg-blue-600');
+        btnDaily.classList.replace('text-gray-700', 'text-white');
+        btnMonthly.classList.replace('bg-blue-600', 'bg-gray-100');
+        btnMonthly.classList.replace('text-white', 'text-gray-700');
+      } else {
+        btnMonthly.classList.replace('bg-gray-100', 'bg-blue-600');
+        btnMonthly.classList.replace('text-gray-700', 'text-white');
+        btnDaily.classList.replace('bg-blue-600', 'bg-gray-100');
+        btnDaily.classList.replace('text-white', 'text-gray-700');
+      }
+      loadGoals();
+    }
+
+    // Event Listeners
+    btnDaily.addEventListener('click', () => toggleType('daily'));
+    btnMonthly.addEventListener('click', () => toggleType('monthly'));
+    btnRefresh.addEventListener('click', loadGoals);
+
+    // Initial Load
+    loadGoals();
+  </script>
+</body>
+</html>
