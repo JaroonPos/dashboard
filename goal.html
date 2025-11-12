@@ -194,7 +194,13 @@
     const type = formData.get('goalType');
     const targetSales = parseInt(formData.get('target_sales')) || 0;
     const date = type === 'daily' ? formData.get('date') : null;
-    const month = type === 'monthly' ? parseInt(formData.get('month')) : null;
+
+    // ✅ ตรวจสอบและแปลง month ให้ถูกต้อง
+    let month = null;
+    if (type === 'monthly') {
+      const monthVal = formData.get('month');
+      month = monthVal ? parseInt(monthVal) : null;
+    }
 
     // ✅ ดึงรายชื่อ user ที่เลือก
     const checkedBoxes = document.querySelectorAll('.user-checkbox:checked');
@@ -205,7 +211,6 @@
       return;
     }
 
-    // ✅ เตรียมข้อมูลสำหรับ insert ทีละ user
     const records = Array.from(checkedBoxes).map(cb => ({
       user_id: parseInt(cb.value),
       type,
@@ -214,18 +219,13 @@
       month
     }));
 
-    console.log("Insert multiple goals:", records);
+    console.log("🎯 Insert Data Preview:", records);
 
     const { data, error } = await supabase
       .from('goals')
       .insert(records)
       .select(`
-        id,
-        user_id,
-        type,
-        target_sales,
-        date,
-        month,
+        id, user_id, type, target_sales, date, month,
         userDash (userName)
       `);
 
@@ -233,12 +233,13 @@
       console.error('Error saving multiple goals:', error.message);
       formMessage.innerHTML = `<span class="text-red-500">❌ บันทึกไม่สำเร็จ: ${error.message}</span>`;
     } else {
+      const monthNames = ["", "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
       formMessage.innerHTML = `<span class="text-green-600">✅ บันทึกเป้าหมาย ${data.length} รายการสำเร็จ!</span>`;
       goalDataDisplay.classList.remove('hidden');
       displayUser.textContent = data.map(d => d.userDash?.userName).join(', ');
       displayType.textContent = type === 'daily' ? 'รายวัน' : 'รายเดือน';
       displaySales.textContent = "฿" + targetSales.toLocaleString();
-      displayPeriod.textContent = type === 'daily' ? date : month;
+      displayPeriod.textContent = type === 'daily' ? date : monthNames[month] || '-';
       displayID.textContent = data.map(d => d.id).join(', ');
       goalForm.reset();
     }
@@ -246,6 +247,7 @@
     saveGoalBtn.disabled = false;
     saveGoalBtn.innerHTML = "✅ บันทึกเป้าหมาย";
   }
+
 
 
   // --- Event Listeners ---
