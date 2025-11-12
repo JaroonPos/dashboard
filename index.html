@@ -51,6 +51,31 @@
     </div>
   </div>
 
+  <!-- 🔒 Modal ยืนยันรหัสผ่าน -->
+  <div id="passwordModal"
+      class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-xl shadow-lg p-6 w-80 text-center">
+      <h2 class="text-xl font-semibold text-gray-800 mb-4">ยืนยันรหัสผ่าน</h2>
+      <input type="password" id="dashboardPassword" placeholder="กรอกรหัสผ่าน"
+        class="w-full border border-gray-300 rounded-lg p-2 mb-4 focus:ring-blue-500 focus:border-blue-500 outline-none">
+      <div class="flex justify-center space-x-2">
+        <button id="confirmPasswordBtn"
+          class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">ตกลง</button>
+        <button id="cancelPasswordBtn"
+          class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition">ยกเลิก</button>
+      </div>
+      <p id="passwordError" class="text-red-500 text-sm mt-3 hidden">❌ รหัสผ่านไม่ถูกต้อง</p>
+    </div>
+  </div>
+
+  <!-- 🔹 ปุ่มไปหน้าตั้งเป้าหมาย -->
+  <div class="text-center mt-8 border-t pt-4">
+    <button id="openGoalLink"
+      class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 transition-all duration-150">
+      🎯 ตั้งเป้ายอดขาย
+    </button>
+  </div>
+
 <script>
   const SUPABASE_URL = 'https://ocmskhrypxeljgncyffp.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9jbXNraHJ5cHhlbGpnbmN5ZmZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc5MDcyMzIsImV4cCI6MjA3MzQ4MzIzMn0.clWbGRV1MrUHnWPyTEc66fnjbD8mLqo6fF1V6qiOJa4';
@@ -309,6 +334,46 @@
     return goals;
   }
 
+  // ✅ รหัสผ่านที่คุณกำหนดเอง
+  const GOAL_ACCESS_PASSWORD = "P@ssw0rd@2025";
+
+  // ✅ อ้างอิง Element
+  const passwordModal = document.getElementById("passwordModal");
+  const openGoalLink = document.getElementById("openGoalLink");
+  const confirmPasswordBtn = document.getElementById("confirmPasswordBtn");
+  const cancelPasswordBtn = document.getElementById("cancelPasswordBtn");
+  const passwordInput = document.getElementById("dashboardPassword");
+  const passwordError = document.getElementById("passwordError");
+
+  // ✅ เมื่อคลิกปุ่ม “ตั้งเป้ายอดขาย” → เปิด modal
+  openGoalLink.addEventListener("click", () => {
+    passwordInput.value = "";
+    passwordError.classList.add("hidden");
+    passwordModal.classList.remove("hidden");
+    passwordInput.focus();
+  });
+
+  // ✅ เมื่อคลิก “ตกลง”
+  confirmPasswordBtn.addEventListener("click", () => {
+    if (passwordInput.value.trim() === GOAL_ACCESS_PASSWORD) {
+      // ✅ ปิด modal และเปลี่ยนหน้า
+      passwordModal.classList.add("hidden");
+      window.location.href = "goal.html";
+    } else {
+      // ❌ แสดงข้อความผิด
+      passwordError.classList.remove("hidden");
+    }
+  });
+
+  // ✅ เมื่อคลิก “ยกเลิก”
+  cancelPasswordBtn.addEventListener("click", () => {
+    passwordModal.classList.add("hidden");
+  });
+
+  // ✅ ปิด modal ด้วยปุ่ม ESC
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") passwordModal.classList.add("hidden");
+  });
 
   // ✅ เพิ่ม Listener สำหรับปุ่ม filter
   document.getElementById('filterDay').addEventListener('click', () => {
