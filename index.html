@@ -120,6 +120,7 @@
         summaryData[salespersonName] = {
           name: salespersonName,
           img: salespersonImg,
+          user_id: sale.userDash?.id || null,   // ✅ เพิ่มบรรทัดนี้
           sales: 0,
           orders: 0,
           units: 0
@@ -139,7 +140,7 @@
 
     // ✅ ผสานข้อมูลยอดขายกับเป้าหมาย
     finalData.forEach(s => {
-      const userGoal = goalsData.find(g => g.user_id === s.userDash?.id);
+      const userGoal = goalsData.find(g => g.user_id === s.user_id);
       if (userGoal) {
         s.goal_target = userGoal.target_sales;
         s.goal_progress = s.sales && userGoal.target_sales > 0
@@ -278,15 +279,17 @@
     const today = now.toISOString().split("T")[0];
 
     let { data: goals, error } = await supabase
-      .from("goals")
-      .select(`
-        id,
-        user_id,
-        type,
-        target_sales,
-        date,
-        month
-      `);
+    .from("goals")
+    .select(`
+      id,
+      user_id,
+      type,
+      target_sales,
+      date,
+      month,
+      userDash ( id, userName )
+    `);
+
 
     if (error) {
       console.error("Error fetching goals:", error.message);
