@@ -19,13 +19,12 @@
     <form id="goalForm" class="space-y-6">
 
       <div>
-        <label for="userSelect" class="block text-sm font-medium text-gray-700 mb-2">
-          ผู้ขาย (Salesperson)
+        <label for="userCheckboxList" class="block text-sm font-medium text-gray-700 mb-2">
+          ผู้ขาย (Salespeople)
         </label>
-        <select id="userSelect" name="user_id" required
-          class="w-full p-3 bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150">
-          <option value="" disabled selected>กำลังโหลดรายชื่อผู้ขาย...</option>
-        </select>
+        <div id="userCheckboxList" class="grid grid-cols-2 gap-2 bg-gray-50 border border-gray-200 p-3 rounded-lg">
+          <p class="text-gray-500 text-sm col-span-2" id="loadingText">กำลังโหลดรายชื่อผู้ขาย...</p>
+        </div>
       </div>
 
       <div>
@@ -132,26 +131,33 @@
 
   // --- 2. โหลดรายชื่อ user ---
   async function loadUsers() {
+    const container = document.getElementById('userCheckboxList');
+    const loadingText = document.getElementById('loadingText');
+
     const { data, error } = await supabase
       .from('userDash')
       .select('id, userName')
-      .eq("statusUser", 1); // ✅ เลือกเฉพาะ active user
+      .eq('statusUser', 1)
+      .order('userName', { ascending: true });
 
     if (error) {
-      console.error('Error loading users:', error);
-      userSelect.innerHTML = '<option value="" disabled>โหลดไม่สำเร็จ</option>';
+      console.error('Error loading users:', error.message);
+      loadingText.textContent = '❌ โหลดผู้ขายไม่สำเร็จ';
       return;
     }
 
-    userSelect.innerHTML = '<option value="" disabled selected>กรุณาเลือกผู้ขาย...</option>';
-
+    container.innerHTML = ''; // ล้างข้อความ "กำลังโหลด..."
     data.forEach(user => {
-      const option = document.createElement('option');
-      option.value = user.id;
-      option.textContent = user.userName;
-      userSelect.appendChild(option);
+      const wrapper = document.createElement('label');
+      wrapper.className = 'flex items-center space-x-2 bg-white border border-gray-200 p-2 rounded hover:bg-blue-50 cursor-pointer';
+      wrapper.innerHTML = `
+        <input type="checkbox" value="${user.id}" class="user-checkbox accent-blue-600">
+        <span>${user.userName}</span>
+      `;
+      container.appendChild(wrapper);
     });
   }
+
 
   // --- 3. สลับระหว่างรายวัน/รายเดือน ---
   function toggleGoalArea() {
@@ -171,53 +177,65 @@
     event.preventDefault();
 
     saveGoalBtn.disabled = true;
-    saveGoalBtn.innerHTML = "⏳ บันทึก...";
+    saveGoalBtn.innerHTML = "⏳ กำลังบันทึก...";
 
     const formData = new FormData(goalForm);
-    const type = formData.get("goalType");
+    const type = formData.get('goalType');
+    const targetSales = parseInt(formData.get('target_sales')) || 0;
+    const date = type === 'daily' ? formData.get('date') : null;
+    const month = type === 'monthly' ? parseInt(formData.get('month')) : null;
 
-    const goalObject = {
-      user_id: formData.get("user_id"),
+    // ✅ ดึงรายชื่อ user ที่เลือก
+    const checkedBoxes = document.querySelectorAll('.user-checkbox:checked');
+    if (checkedBoxes.length === 0) {
+      formMessage.innerHTML = `<span class="text-red-500">⚠ กรุณาเลือกผู้ขายอย่างน้อย 1 คน</span>`;
+      saveGoalBtn.disabled = false;
+      saveGoalBtn.innerHTML = "✅ บันทึกเป้าหมาย";
+      return;
+    }
+
+    // ✅ เตรียมข้อมูลสำหรับ insert ทีละ user
+    const records = Array.from(checkedBoxes).map(cb => ({
+      user_id: parseInt(cb.value),
       type,
-      target_sales: parseInt(formData.get("target_sales")),
-      date: type === "daily" ? formData.get("date") : null,
-      month: type === "monthly" ? parseInt(formData.get("month")) : null
-    };
+      target_sales: targetSales,
+      date,
+      month
+    }));
 
-    console.log("Insert -> ", goalObject);
+    console.log("Insert multiple goals:", records);
 
     const { data, error } = await supabase
-      .from("goals")
-      .insert([goalObject])
+      .from('goals')
+      .insert(records)
       .select(`
         id,
-        target_sales,
+        user_id,
         type,
+        target_sales,
         date,
         month,
-        userDash ( userName )
+        userDash (userName)
       `);
 
     if (error) {
-      console.error("Insert error:", error);
-      formMessage.innerHTML = `<span class="text-red-500">❌ ${error.message}</span>`;
+      console.error('Error saving multiple goals:', error.message);
+      formMessage.innerHTML = `<span class="text-red-500">❌ บันทึกไม่สำเร็จ: ${error.message}</span>`;
     } else {
-      const result = data[0];
-
-      displayUser.textContent = result.userDash.userName;
-      displayType.textContent = (result.type === "daily") ? "รายวัน" : "รายเดือน";
-      displaySales.textContent = "฿" + result.target_sales.toLocaleString();
-      displayPeriod.textContent = (result.type === "daily") ? result.date : result.month;
-      displayID.textContent = result.id;
-
-      goalDataDisplay.classList.remove("hidden");
-      formMessage.innerHTML = `<span class="text-green-600">✅ บันทึกสำเร็จ!</span>`;
+      formMessage.innerHTML = `<span class="text-green-600">✅ บันทึกเป้าหมาย ${data.length} รายการสำเร็จ!</span>`;
+      goalDataDisplay.classList.remove('hidden');
+      displayUser.textContent = data.map(d => d.userDash?.userName).join(', ');
+      displayType.textContent = type === 'daily' ? 'รายวัน' : 'รายเดือน';
+      displaySales.textContent = "฿" + targetSales.toLocaleString();
+      displayPeriod.textContent = type === 'daily' ? date : month;
+      displayID.textContent = data.map(d => d.id).join(', ');
       goalForm.reset();
     }
 
     saveGoalBtn.disabled = false;
     saveGoalBtn.innerHTML = "✅ บันทึกเป้าหมาย";
   }
+
 
   // --- Event Listeners ---
   document.addEventListener("DOMContentLoaded", () => {
