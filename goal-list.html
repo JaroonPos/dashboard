@@ -3,41 +3,44 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🎯 รายการเป้าหมายการขาย</title>
+  <title>🎯 จัดการเป้าหมายการขาย</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
 <body class="bg-gray-100 min-h-screen p-4 flex flex-col items-center">
 
-  <div class="max-w-5xl w-full bg-white p-6 rounded-2xl shadow-lg border border-gray-200">
+  <div class="max-w-6xl w-full bg-white p-6 rounded-2xl shadow-lg border border-gray-200">
 
     <!-- Header -->
     <div class="flex items-center justify-between mb-6">
-      <h1 class="text-2xl font-bold text-gray-800">🎯 รายการเป้าหมายการขาย</h1>
-      <a href="goal.html"
-         class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition">
-        ➕ เพิ่มเป้าหมายใหม่
-      </a>
+      <h1 class="text-2xl font-bold text-gray-800">🎯 จัดการเป้าหมายการขาย</h1>
+      <div class="flex gap-2">
+        <a href="goal.html"
+           class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition">➕ เพิ่มเป้าหมายใหม่</a>
+        <a href="index.html"
+           class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm hover:bg-gray-300 transition">⬅ กลับ Dashboard</a>
+      </div>
     </div>
 
-    <!-- Toggle Filter -->
-    <div class="flex justify-center gap-3 mb-6">
-      <button id="btnDaily"
-        class="toggle-btn bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold shadow">
-        รายวัน
-      </button>
-      <button id="btnMonthly"
-        class="toggle-btn bg-gray-100 text-gray-700 px-4 py-2 rounded-lg font-semibold border">
-        รายเดือน
-      </button>
-      <button id="btnRefresh"
-        class="bg-green-100 text-green-700 px-4 py-2 rounded-lg hover:bg-green-200 font-medium border border-green-300">
-        🔄 โหลดใหม่
-      </button>
+    <!-- Filter Row -->
+    <div class="flex flex-wrap gap-3 items-center justify-between mb-6">
+      <div class="flex gap-2">
+        <button id="btnDaily" class="toggle-btn bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold shadow">รายวัน</button>
+        <button id="btnMonthly" class="toggle-btn bg-gray-100 text-gray-700 px-4 py-2 rounded-lg font-semibold border">รายเดือน</button>
+      </div>
+
+      <div class="flex gap-2 items-center">
+        <input type="text" id="searchInput" placeholder="🔍 ค้นหาชื่อผู้ขาย..."
+          class="px-3 py-2 border border-gray-300 rounded-lg text-sm w-48 focus:ring-blue-500 focus:border-blue-500" />
+        <button id="btnRefresh"
+          class="bg-green-100 text-green-700 px-3 py-2 rounded-lg hover:bg-green-200 font-medium border border-green-300">
+          🔄 โหลดใหม่
+        </button>
+      </div>
     </div>
 
-    <!-- ตารางข้อมูล -->
+    <!-- ตาราง -->
     <div class="overflow-x-auto">
       <table class="w-full text-sm border-collapse border border-gray-200">
         <thead class="bg-gray-50">
@@ -48,12 +51,25 @@
             <th class="border p-2">วันที่/เดือน</th>
             <th class="border p-2">เป้ายอดขาย (฿)</th>
             <th class="border p-2">วันที่สร้าง</th>
+            <th class="border p-2">การจัดการ</th>
           </tr>
         </thead>
         <tbody id="goalTableBody" class="text-center">
-          <tr><td colspan="6" class="p-4 text-gray-400">กำลังโหลดข้อมูล...</td></tr>
+          <tr><td colspan="7" class="p-4 text-gray-400">⏳ กำลังโหลดข้อมูล...</td></tr>
         </tbody>
       </table>
+    </div>
+  </div>
+
+  <!-- Modal แก้ไข -->
+  <div id="editModal" class="fixed inset-0 bg-black bg-opacity-40 hidden items-center justify-center">
+    <div class="bg-white p-6 rounded-xl shadow-lg w-80">
+      <h2 class="text-lg font-bold mb-4 text-center">✏️ แก้ไขเป้าหมาย</h2>
+      <input type="number" id="editTarget" class="w-full border border-gray-300 rounded-lg p-2 mb-4" placeholder="ยอดขายใหม่ (฿)">
+      <div class="flex justify-end gap-3">
+        <button id="btnCancelEdit" class="px-3 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">ยกเลิก</button>
+        <button id="btnSaveEdit" class="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">บันทึก</button>
+      </div>
     </div>
   </div>
 
@@ -63,45 +79,55 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9jbXNraHJ5cHhlbGpnbmN5ZmZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc5MDcyMzIsImV4cCI6MjA3MzQ4MzIzMn0.clWbGRV1MrUHnWPyTEc66fnjbD8mLqo6fF1V6qiOJa4';
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // DOM
     const btnDaily = document.getElementById("btnDaily");
     const btnMonthly = document.getElementById("btnMonthly");
     const btnRefresh = document.getElementById("btnRefresh");
     const goalTableBody = document.getElementById("goalTableBody");
+    const searchInput = document.getElementById("searchInput");
+    const editModal = document.getElementById("editModal");
+    const editTarget = document.getElementById("editTarget");
+    const btnCancelEdit = document.getElementById("btnCancelEdit");
+    const btnSaveEdit = document.getElementById("btnSaveEdit");
 
-    let currentType = 'daily'; // ค่าเริ่มต้น
+    let currentType = 'daily';
+    let goalsData = [];
+    let editingGoalId = null;
 
     async function loadGoals() {
-      goalTableBody.innerHTML = `<tr><td colspan="6" class="p-4 text-gray-400">⏳ กำลังโหลดข้อมูล...</td></tr>`;
+      goalTableBody.innerHTML = `<tr><td colspan="7" class="p-4 text-gray-400">⏳ กำลังโหลดข้อมูล...</td></tr>`;
 
       const { data, error } = await supabase
         .from('goals')
         .select(`
-          id,
-          type,
-          target_sales,
-          date,
-          month,
-          created_at,
+          id, type, target_sales, date, month, created_at,
           userDash (userName)
         `)
         .eq('type', currentType)
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching goals:', error.message);
-        goalTableBody.innerHTML = `<tr><td colspan="6" class="text-red-500 p-4">❌ โหลดข้อมูลไม่สำเร็จ: ${error.message}</td></tr>`;
+        goalTableBody.innerHTML = `<tr><td colspan="7" class="text-red-500 p-4">❌ โหลดข้อมูลไม่สำเร็จ: ${error.message}</td></tr>`;
         return;
       }
 
-      if (!data || data.length === 0) {
-        goalTableBody.innerHTML = `<tr><td colspan="6" class="text-gray-500 p-4">ไม่พบข้อมูลเป้าหมาย</td></tr>`;
+      goalsData = data;
+      renderTable();
+    }
+
+    function renderTable() {
+      const searchTerm = searchInput.value.trim().toLowerCase();
+      const filtered = goalsData.filter(g => 
+        g.userDash?.userName?.toLowerCase().includes(searchTerm)
+      );
+
+      if (filtered.length === 0) {
+        goalTableBody.innerHTML = `<tr><td colspan="7" class="p-4 text-gray-400">ไม่พบข้อมูล</td></tr>`;
         return;
       }
 
       const monthName = ["-", "ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
 
-      goalTableBody.innerHTML = data.map((g, i) => `
+      goalTableBody.innerHTML = filtered.map((g, i) => `
         <tr class="hover:bg-gray-50 transition">
           <td class="border p-2">${i + 1}</td>
           <td class="border p-2">${g.userDash?.userName || '-'}</td>
@@ -109,11 +135,53 @@
           <td class="border p-2">${g.type === 'daily' ? g.date : monthName[g.month] || '-'}</td>
           <td class="border p-2 text-right">฿${g.target_sales.toLocaleString()}</td>
           <td class="border p-2 text-gray-500">${new Date(g.created_at).toLocaleDateString('th-TH')}</td>
+          <td class="border p-2 flex justify-center gap-2">
+            <button onclick="openEdit(${g.id}, ${g.target_sales})" class="text-blue-600 hover:text-blue-800">✏️</button>
+            <button onclick="deleteGoal(${g.id})" class="text-red-600 hover:text-red-800">🗑️</button>
+          </td>
         </tr>
       `).join('');
     }
 
-    // Toggle Buttons
+    async function deleteGoal(id) {
+      if (!confirm("คุณแน่ใจหรือไม่ว่าต้องการลบเป้าหมายนี้?")) return;
+      const { error } = await supabase.from('goals').delete().eq('id', id);
+      if (error) alert("❌ ลบไม่สำเร็จ: " + error.message);
+      else {
+        alert("✅ ลบสำเร็จ!");
+        loadGoals();
+      }
+    }
+
+    function openEdit(id, currentTarget) {
+      editingGoalId = id;
+      editTarget.value = currentTarget;
+      editModal.classList.remove('hidden');
+      editModal.classList.add('flex');
+    }
+
+    async function saveEdit() {
+      const newTarget = parseInt(editTarget.value);
+      if (isNaN(newTarget) || newTarget <= 0) {
+        alert("กรุณากรอกยอดขายใหม่ที่ถูกต้อง");
+        return;
+      }
+
+      const { error } = await supabase.from('goals').update({ target_sales: newTarget }).eq('id', editingGoalId);
+      if (error) alert("❌ อัปเดตไม่สำเร็จ: " + error.message);
+      else {
+        alert("✅ บันทึกการแก้ไขเรียบร้อย");
+        closeEditModal();
+        loadGoals();
+      }
+    }
+
+    function closeEditModal() {
+      editModal.classList.add('hidden');
+      editModal.classList.remove('flex');
+      editingGoalId = null;
+    }
+
     function toggleType(type) {
       currentType = type;
       if (type === 'daily') {
@@ -130,12 +198,15 @@
       loadGoals();
     }
 
-    // Event Listeners
+    // Events
     btnDaily.addEventListener('click', () => toggleType('daily'));
     btnMonthly.addEventListener('click', () => toggleType('monthly'));
     btnRefresh.addEventListener('click', loadGoals);
+    searchInput.addEventListener('input', renderTable);
+    btnCancelEdit.addEventListener('click', closeEditModal);
+    btnSaveEdit.addEventListener('click', saveEdit);
 
-    // Initial Load
+    // Initial load
     loadGoals();
   </script>
 </body>
