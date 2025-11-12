@@ -134,6 +134,23 @@
     const finalData = Object.values(summaryData);
     finalData.sort((a, b) => b.sales - a.sales);
 
+    // ✅ โหลดเป้าหมายของพนักงานขาย
+    const goalsData = await fetchGoals();
+
+    // ✅ ผสานข้อมูลยอดขายกับเป้าหมาย
+    finalData.forEach(s => {
+      const userGoal = goalsData.find(g => g.user_id === s.userDash?.id);
+      if (userGoal) {
+        s.goal_target = userGoal.target_sales;
+        s.goal_progress = s.sales && userGoal.target_sales > 0
+          ? Math.min((s.sales / userGoal.target_sales) * 100, 100)
+          : 0;
+      } else {
+        s.goal_target = null;
+        s.goal_progress = null;
+      }
+    });
+
     updateSummary(finalData);
     populateCards(finalData);
     drawOrUpdateChart(finalData);
@@ -172,6 +189,20 @@
             <div class="flex flex-col text-right">
               <span class="font-semibold text-gray-600 text-xs">ยอดขายรวม</span>
               <span class="text-base font-semibold text-green-700">฿${s.sales.toLocaleString()}</span>
+              ${s.goal_target ? `
+                <div class="mt-1 text-xs text-gray-600">
+                  เป้า: ฿${s.goal_target.toLocaleString()}  
+                  <div class="w-full bg-gray-200 rounded-full h-2 mt-1">
+                    <div class="h-2 rounded-full ${s.goal_progress >= 100 ? 'bg-green-500' : 'bg-blue-500'}"
+                        style="width: ${s.goal_progress.toFixed(1)}%">
+                    </div>
+                  </div>
+                  <span class="text-[10px] text-gray-500">${s.goal_progress.toFixed(1)}%</span>
+                </div>
+              ` : `
+                <div class="mt-1 text-xs text-gray-400 italic">ยังไม่มีเป้าหมาย</div>
+              `}
+
             </div>
           </div>
         </a>
@@ -239,6 +270,42 @@
       salesChartInstance.update();
     }
   }
+
+  // --- โหลดข้อมูลเป้าหมายจากตาราง goals ---
+  async function fetchGoals() {
+    const now = new Date();
+    const month = now.getMonth() + 1;
+    const today = now.toISOString().split("T")[0];
+
+    let { data: goals, error } = await supabase
+      .from("goals")
+      .select(`
+        id,
+        user_id,
+        type,
+        target_sales,
+        date,
+        month
+      `);
+
+    if (error) {
+      console.error("Error fetching goals:", error.message);
+      return [];
+    }
+
+    // กรองเฉพาะเป้าหมายที่เกี่ยวข้องกับ filter ปัจจุบัน
+    if (currentFilter === "day") {
+      goals = goals.filter(g => g.type === "daily" && g.date === today);
+    } else if (currentFilter === "month") {
+      goals = goals.filter(g => g.type === "monthly" && g.month === month);
+    } else {
+      // filter week ยังไม่รองรับ goal type เฉพาะ → อาจเลือกใช้ daily หรือ monthly ตามที่มี
+      goals = [];
+    }
+
+    return goals;
+  }
+
 
   // ✅ เพิ่ม Listener สำหรับปุ่ม filter
   document.getElementById('filterDay').addEventListener('click', () => {
