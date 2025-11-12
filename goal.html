@@ -126,12 +126,13 @@
 
   // ✅ ตัวแปร DOM ที่จำเป็น
   const goalForm = document.getElementById('goalForm');
-  const userSelect = document.getElementById('userSelect');
   const goalTypeRadios = document.querySelectorAll('input[name="goalType"]');
-  const dailyArea = document.getElementById('goalDate').parentElement;
-  const monthlyArea = document.getElementById('monthlyGoalArea');
-  const saveGoalBtn = document.getElementById('saveGoalBtn');
+  const dailyArea = document.getElementById('dailyGoalArea');
+  const monthlyArea = document.getElementById('monthlyArea');
+  const goalDateInput = document.getElementById('goalDate'); 
+  const goalMonthSelect = document.getElementById('goalMonth');
 
+  const saveGoalBtn = document.getElementById('saveGoalBtn');
   const formMessage = document.getElementById('formMessage');
   const goalDataDisplay = document.getElementById('goalDataDisplay');
   const displayUser = document.getElementById('displayUser');
@@ -139,6 +140,7 @@
   const displaySales = document.getElementById('displaySales');
   const displayPeriod = document.getElementById('displayPeriod');
   const displayID = document.getElementById('displayID');
+
 
   // --- 2. โหลดรายชื่อ user ---
   async function loadUsers() {
@@ -175,11 +177,22 @@
     const selected = document.querySelector('input[name="goalType"]:checked').value;
 
     if (selected === 'daily') {
+      // 1. แสดง/ซ่อน
       dailyArea.classList.remove('hidden');
       monthlyArea.classList.add('hidden');
-    } else {
-      monthlyArea.classList.remove('hidden');
+      
+      // 2. ✅ จัดการ required (สำคัญ)
+      goalDateInput.required = true;
+      goalMonthSelect.required = false; 
+      
+    } else { // 'monthly'
+      // 1. แสดง/ซ่อน
       dailyArea.classList.add('hidden');
+      monthlyArea.classList.remove('hidden');
+      
+      // 2. ✅ จัดการ required (สำคัญ)
+      goalDateInput.required = false; // นี่คือจุดที่แก้ Error ของคุณ
+      goalMonthSelect.required = true;
     }
   }
 
